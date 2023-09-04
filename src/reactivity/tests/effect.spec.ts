@@ -62,23 +62,43 @@ describe('effect', () => {
 
 
   it("stop", () => {
-    let dummy;
-    const obj = reactive({ prop: 1 });
+    let dummy, dummy1;
+    const obj = reactive({ a: 1, b: 2 });
     const runner = effect(() => {
-      dummy = obj.prop;
+      dummy = obj.a;
+      dummy1 = obj.b
     });
-    obj.prop = 2;
+    // 使用自增语法, 会导致收集一次依赖
+    // obj.a++
+    obj.a = 2
+    obj.b = 3
+
     expect(dummy).toBe(2);
+    expect(dummy1).toBe(3);
 
     stop(runner);
-   /*  obj.prop = 3
-    // obj.prop++;
+    obj.a = 3
+    obj.b = 4
+
     expect(dummy).toBe(2);
+    expect(dummy1).toBe(3);
 
     // stopped effect should still be manually callable
     runner();
-    expect(dummy).toBe(3); */
+
+    expect(dummy).toBe(3);
+    expect(dummy1).toBe(4);
   });
 
 
+  it('onStop', () => {
+    let dummy;
+    const obj = reactive({ foo: 1 })
+    const onStop = jest.fn()
+    const runner = effect(() => {
+      dummy = obj.foo
+    }, { onStop })
+    stop(runner)
+    expect(onStop).toBeCalledTimes(1)
+  })
 })

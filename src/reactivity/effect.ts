@@ -1,4 +1,4 @@
-
+import { extend } from "../shared";
 
 interface Runner {
   (): void;
@@ -11,6 +11,8 @@ const targetMap = new Map()
 class ReactiveEffect {
   private _fn: () => unknown
   public deps: Set<ReactiveEffect>[] = [];
+  public active: boolean = true;
+  public onStop = () => { }
   constructor(fn: () => void, public scheduler) {
     // 组件更新函数
     this._fn = fn
@@ -26,7 +28,11 @@ class ReactiveEffect {
     return this._fn()
   }
   stop() {
-    cleanupEffect(this)
+    if (this.active) {
+      cleanupEffect(this)
+      this.onStop && this.onStop()
+      this.active = false
+    }
   }
 }
 
@@ -50,9 +56,15 @@ export function track(target, key) {
   }
 
 
-  deps.add(activeEffect)
+  // 在reactive中的单测代码, 并未执行effect, 所以activeEffect为undefined
+  // 如果外部并未执行effect, 而是直接读取响应式的值, 被get陷阱函数拦截, 调用track, 此处activeEffect为undefined
+  if (!activeEffect) return
 
-  // if(!activeEffect) return
+  deps.add(activeEffect)
+  // activeEffect.deps是所有响应式所有key的deps
+  // 例如 reactive({a: 1, b: 2, c: 3})
+  // depsMap: { a: Set([avtiveEffect]), b: Set([avtiveEffect]), c: Set([avtiveEffect]) }
+  // 如果a,b,c都触发了响应式, 那么activeEffect.deps就会收集上面所有的Set
   activeEffect.deps.push(deps)
 }
 
@@ -72,6 +84,9 @@ export function trigger(target, key) {
 export function effect(fn, options: any = {}) {
   const scheduler = options.scheduler
   const _effect = new ReactiveEffect(fn, scheduler)
+
+  // 考虑到后期会添加很多options的数据到_effect中, 因此重构此处
+  extend(_effect, options)
 
   _effect.run()
   const runner = _effect.run.bind(_effect) as Runner
