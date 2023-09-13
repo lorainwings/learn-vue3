@@ -5,12 +5,16 @@ interface Runner {
   effect: ReactiveEffect
 }
 
+// 全局存储当前组件的effect
 let activeEffect: ReactiveEffect;
+// stop后是否应该收集依赖
+// let shouldTrack;
 const targetMap = new Map()
 
 class ReactiveEffect {
   private _fn: () => unknown
   public deps: Set<ReactiveEffect>[] = [];
+  // 防止多次调用stop
   public active: boolean = true;
   public onStop = () => { }
   constructor(fn: () => void, public scheduler) {
@@ -59,6 +63,8 @@ export function track(target, key) {
   // 在reactive中的单测代码, 并未执行effect, 所以activeEffect为undefined
   // 如果外部并未执行effect, 而是直接读取响应式的值, 被get陷阱函数拦截, 调用track, 此处activeEffect为undefined
   if (!activeEffect) return
+
+  // 如果stop后, 不应该收集依赖, 因此直接返回
 
   deps.add(activeEffect)
   // activeEffect.deps是所有响应式所有key的deps

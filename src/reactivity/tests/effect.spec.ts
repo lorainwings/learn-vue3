@@ -68,8 +68,6 @@ describe('effect', () => {
       dummy = obj.a;
       dummy1 = obj.b
     });
-    // 使用自增语法, 会导致收集一次依赖
-    // obj.a++
     obj.a = 2
     obj.b = 3
 
@@ -77,6 +75,9 @@ describe('effect', () => {
     expect(dummy1).toBe(3);
 
     stop(runner);
+    // 使用自增语法,等同于 obj.a = obj.a + 1, 会导致多收集一次依赖
+    // 上一步虽然已经清理, 但这里又添加了一次依赖, 因此还需优化obj.a++的场景
+    // obj.a++
     obj.a = 3
     obj.b = 4
 
