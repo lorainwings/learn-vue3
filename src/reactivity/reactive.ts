@@ -21,6 +21,6 @@ export function isReactive(obj) {
   return !!(obj[ReactiveFlags.IS_REACTIVE])
 }
 
-export function isReadonly(obj){
+export function isReadonly(obj) {
   return !!(obj[ReactiveFlags.IS_READONLY])
 }

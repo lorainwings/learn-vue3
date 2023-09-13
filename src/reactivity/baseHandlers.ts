@@ -1,5 +1,6 @@
+import { isObject } from "../shared"
 import { track, trigger } from "./effect"
-import { ReactiveFlags } from "./reactive"
+import { ReactiveFlags, reactive, readonly } from "./reactive"
 
 // 防止每次引用都会执行一次createGetter/createSetter
 // 缓存之后, 只会创建一次
@@ -13,6 +14,12 @@ function createGetter(isReadonly = false) {
     if (key === ReactiveFlags.IS_READONLY) return isReadonly
 
     const res = Reflect.get(target, key)
+
+    // 如果res也是object, 那么再次调用reactive, 递归代理
+    if (isObject(res)) {
+      return isReadonly ? readonly(res) : reactive(res)
+    }
+
     if (!isReadonly) {
       track(target, key)
     }
