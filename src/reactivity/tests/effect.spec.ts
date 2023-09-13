@@ -52,43 +52,36 @@ describe('effect', () => {
     // should be called on first trigger
     obj.foo++;
     expect(scheduler).toHaveBeenCalledTimes(1);
-    // // should not run yet
+    // should not run yet
     expect(dummy).toBe(1);
-    // // manually run
+    // manually run
     run();
-    // // should have run
+    // should have run
     expect(dummy).toBe(2);
   });
 
 
   it("stop", () => {
-    let dummy, dummy1;
+    let dummy;
     const obj = reactive({ a: 1, b: 2 });
     const runner = effect(() => {
       dummy = obj.a;
-      dummy1 = obj.b
     });
     obj.a = 2
-    obj.b = 3
 
     expect(dummy).toBe(2);
-    expect(dummy1).toBe(3);
 
     stop(runner);
     // 使用自增语法,等同于 obj.a = obj.a + 1, 会导致多收集一次依赖
     // 上一步虽然已经清理, 但这里又添加了一次依赖, 因此还需优化obj.a++的场景
-    // obj.a++
-    obj.a = 3
-    obj.b = 4
-
+    obj.a++
+    // obj.a = 3
     expect(dummy).toBe(2);
-    expect(dummy1).toBe(3);
 
     // stopped effect should still be manually callable
     runner();
 
     expect(dummy).toBe(3);
-    expect(dummy1).toBe(4);
   });
 
 

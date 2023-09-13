@@ -8,7 +8,7 @@ interface Runner {
 // 全局存储当前组件的effect
 let activeEffect: ReactiveEffect;
 // stop后是否应该收集依赖
-// let shouldTrack;
+let shouldTrack;
 const targetMap = new Map()
 
 class ReactiveEffect {
@@ -23,13 +23,18 @@ class ReactiveEffect {
     this.scheduler = scheduler
   }
   run() {
+    if (!this.active) return this._fn()
+    shouldTrack = true
+
     // 全局指针先引用当前的ReactEffect实例
     // 当前的ReactEffect实例存储着更新组件的componentUpdateFn
     // 执行this._fn后, 会读取响应式变量, 接着触发了get陷阱函数
     // 在陷阱函数的track中, 会通过dep来保存当前的ReactEffect实例
     // 因此, 同一个组件只有一个ReactEffect实例
     activeEffect = this;
-    return this._fn()
+    const result = this._fn()
+    shouldTrack = false
+    return result
   }
   stop() {
     if (this.active) {
@@ -44,9 +49,11 @@ function cleanupEffect(effect) {
   effect.deps.forEach((dep) => {
     dep.delete(effect)
   })
+  effect.deps.length = 0
 }
 
 export function track(target, key) {
+  if(!isTracking()) return
   // target -> key -> dep
   let depsMap = targetMap.get(target)
   if (!depsMap) {
@@ -59,19 +66,21 @@ export function track(target, key) {
     depsMap.set(key, deps)
   }
 
-
-  // 在reactive中的单测代码, 并未执行effect, 所以activeEffect为undefined
-  // 如果外部并未执行effect, 而是直接读取响应式的值, 被get陷阱函数拦截, 调用track, 此处activeEffect为undefined
-  if (!activeEffect) return
-
-  // 如果stop后, 不应该收集依赖, 因此直接返回
-
+  // 防止重复收集依赖, set中征对对象无法去重
+  if(deps.has(activeEffect)) return
   deps.add(activeEffect)
   // activeEffect.deps是所有响应式所有key的deps
   // 例如 reactive({a: 1, b: 2, c: 3})
   // depsMap: { a: Set([avtiveEffect]), b: Set([avtiveEffect]), c: Set([avtiveEffect]) }
   // 如果a,b,c都触发了响应式, 那么activeEffect.deps就会收集上面所有的Set
   activeEffect.deps.push(deps)
+}
+
+function isTracking() {
+  // 在reactive中的单测代码, 并未执行effect, 所以activeEffect为undefined
+  // 如果外部并未执行effect, 而是直接读取响应式的值, 被get陷阱函数拦截, 调用track, 此处activeEffect为undefined
+  // 如果stop后, 不应该收集依赖, 因此直接返回
+  return shouldTrack && activeEffect !== undefined
 }
 
 export function trigger(target, key) {
