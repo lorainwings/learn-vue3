@@ -9,6 +9,7 @@ interface Ref<T> {
 export class RefImpl {
   private _value;
   private _rawValue;
+  public __v_isRef = true;
   public deps = new Set();
 
   constructor(value) {
@@ -46,3 +47,10 @@ export function ref<T>(value: T): Ref<T> {
 }
 
 
+export function isRef(ref) {
+  return !!ref.__v_isRef
+}
+
+export function unRef(ref) {
+  return isRef(ref) ? ref.value : ref
+}
