@@ -7,8 +7,8 @@ interface Ref<T> {
 }
 
 export class RefImpl {
-  private _value;
-  private _rawValue;
+  private _value: any;
+  private _rawValue: any;
   public __v_isRef = true;
   public deps = new Set();
 
@@ -47,10 +47,29 @@ export function ref<T>(value: T): Ref<T> {
 }
 
 
-export function isRef(ref) {
+export function isRef(ref): ref is RefImpl {
   return !!ref.__v_isRef
 }
 
 export function unRef(ref) {
   return isRef(ref) ? ref.value : ref
+}
+
+// proxyRefs用于自动拆包, 即不需要.value来访问ref值
+// 使用场景一般在template中, template中不需要.value来访问ref值
+export function proxyRefs<T extends Object>(objectWithRefs: T): Record<string, any> {
+  return new Proxy(objectWithRefs, {
+    get(target, key) {
+      return unRef(Reflect.get(target, key))
+    },
+    set(target, key, value) {
+      const o = Reflect.get(target, key)
+      // 源对象是ref对象, 但是新值不是ref对象, 则直接修改ref对象的value值
+      if (isRef(o) && !isRef(value)) {
+        return target[key].value = value
+      } else {
+        return Reflect.set(target, key, value)
+      }
+    }
+  })
 }
