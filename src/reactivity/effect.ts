@@ -53,7 +53,7 @@ function cleanupEffect(effect) {
 }
 
 export function track(target, key) {
-  if(!isTracking()) return
+  if (!isTracking()) return
   // target -> key -> dep
   let depsMap = targetMap.get(target)
   if (!depsMap) {
@@ -66,17 +66,10 @@ export function track(target, key) {
     depsMap.set(key, deps)
   }
 
-  // 防止重复收集依赖, set中征对对象无法去重
-  if(deps.has(activeEffect)) return
-  deps.add(activeEffect)
-  // activeEffect.deps是所有响应式所有key的deps
-  // 例如 reactive({a: 1, b: 2, c: 3})
-  // depsMap: { a: Set([avtiveEffect]), b: Set([avtiveEffect]), c: Set([avtiveEffect]) }
-  // 如果a,b,c都触发了响应式, 那么activeEffect.deps就会收集上面所有的Set
-  activeEffect.deps.push(deps)
+  trackEffects(deps)
 }
 
-function isTracking() {
+export function isTracking() {
   // 在reactive中的单测代码, 并未执行effect, 所以activeEffect为undefined
   // 如果外部并未执行effect, 而是直接读取响应式的值, 被get陷阱函数拦截, 调用track, 此处activeEffect为undefined
   // 如果stop后, 不应该收集依赖, 因此直接返回
@@ -86,13 +79,28 @@ function isTracking() {
 export function trigger(target, key) {
   const depsMap = targetMap.get(target)
   const dep = depsMap.get(key)
+  triggerEffects(dep);
+}
+
+export function triggerEffects(dep: any) {
   for (const effect of dep) {
     if (effect.scheduler) {
-      effect.scheduler()
+      effect.scheduler();
     } else {
-      effect.run()
+      effect.run();
     }
   }
+}
+
+export function trackEffects(deps) {
+  // 防止重复收集依赖, set中征对对象无法去重
+  if (deps.has(activeEffect)) return
+  deps.add(activeEffect)
+  // activeEffect.deps是所有响应式所有key的deps
+  // 例如 reactive({a: 1, b: 2, c: 3})
+  // depsMap: { a: Set([avtiveEffect]), b: Set([avtiveEffect]), c: Set([avtiveEffect]) }
+  // 如果a,b,c都触发了响应式, 那么activeEffect.deps就会收集上面所有的Set
+  activeEffect.deps.push(deps)
 }
 
 
