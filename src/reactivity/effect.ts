@@ -11,13 +11,13 @@ let activeEffect: ReactiveEffect;
 let shouldTrack;
 const targetMap = new Map()
 
-class ReactiveEffect {
+export class ReactiveEffect {
   private _fn: () => unknown
   public deps: Set<ReactiveEffect>[] = [];
   // 防止多次调用stop
   public active: boolean = true;
   public onStop = () => { }
-  constructor(fn: () => void, public scheduler) {
+  constructor(fn: () => void, public scheduler?) {
     // 组件更新函数
     this._fn = fn
     this.scheduler = scheduler
