@@ -1,3 +1,5 @@
+import { h } from "../../lib/vue-next.esm.js"
+
 export const App = {
   // .vue3
   // template

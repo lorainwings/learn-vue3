@@ -1,10 +1,15 @@
+import type { VNode } from "./vnode"
+
+
 export interface ComponentInternalInstance {
+  vnode: VNode
   type: any
   render?: (...args: unknown[]) => void
 }
 
 export function createComponentInstance(vnode) {
   const component = {
+    vnode,
     type: vnode.type
   } satisfies ComponentInternalInstance
   return component
@@ -38,9 +43,7 @@ function handleSetupResult(instance: any, setupResult: any) {
 
 function finishComponent(instance: any) {
   const Component = instance.type
-  // ???
-  if (!Component.render) {
-    instance.render = Component.render
-  }
+
+  instance.render = Component.render
 }
 

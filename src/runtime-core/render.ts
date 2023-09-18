@@ -1,5 +1,4 @@
 import { createComponentInstance, setupComponent } from "./component"
-import type { ComponentInternalInstance } from "./component"
 
 
 export function render(vnode, container) {
@@ -7,9 +6,12 @@ export function render(vnode, container) {
   patch(vnode, container)
 }
 
-function patch(vnode, container) {
+function patch(vnode: any, container: any) {
   // 处理组件
   // 判断是不是element类型
+  // processElement()
+
+  // 如果是组件类型
   processComponent(vnode, container)
 }
 
