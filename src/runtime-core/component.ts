@@ -1,17 +1,20 @@
+import { PublicInstanceProxyHandles } from "./componentPublicInstance"
 import type { VNode } from "./vnode"
 
+type ProxyInstanceType<T = ProxyConstructor> = T extends new (...args: any) => infer R ? R : any
 
 export interface ComponentInternalInstance {
   vnode: VNode
   type: any
-  render?: (...args: unknown[]) => void
+  render: (...args: any[]) => any
+  proxy: ProxyInstanceType | null
 }
 
 export function createComponentInstance(vnode) {
   const component = {
     vnode,
     type: vnode.type
-  } satisfies ComponentInternalInstance
+  } as ComponentInternalInstance
   return component
 }
 
@@ -23,6 +26,9 @@ export function setupComponent(instance) {
 
 function setupStatefulComponent(instance: any) {
   const Component = instance.type
+
+  // 此处_用于传参
+  instance.proxy = new Proxy({ _: instance }, PublicInstanceProxyHandles)
   const { setup } = Component
   if (setup) {
     // function Object

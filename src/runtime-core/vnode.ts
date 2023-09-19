@@ -1,7 +1,8 @@
 export interface VNode {
-  type: Record<string, any>
+  type: Record<string, any> | string
   props: Record<string, any>
-  children: VNode[]
+  children: VNode[],
+  el: null | HTMLElement
 }
 
 export function createVNode(type, props?, children?): VNode {
@@ -9,7 +10,8 @@ export function createVNode(type, props?, children?): VNode {
     // type就是原来的组件选项对象
     type,
     props,
-    children
+    children,
+    el: null
   }
   return vnode
 }

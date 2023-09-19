@@ -3,7 +3,7 @@ import { render } from "./render";
 
 export function createApp(rootComponent) {
   return {
-    mount(rootContainer) {
+    mount(rootContainer: HTMLElement) {
       /**
        *  1. 先转VNode
        *  */

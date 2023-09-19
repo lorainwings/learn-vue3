@@ -1,15 +1,18 @@
 import { isObject } from "../shared"
 import { createComponentInstance, setupComponent } from "./component"
+import type { ComponentInternalInstance } from "./component"
+import type { VNode } from "./vnode"
 
 
-export function render(vnode, container) {
+
+export function render(vnode: VNode, container: HTMLElement) {
   // 调用patch
   patch(vnode, container)
 }
 
-function patch(vnode: any, container: any) {
+function patch(vnode: VNode, container: HTMLElement) {
   // 按类型处理vnode
-  // 组件vode.type是个对象, 而普通元素vnode.type是个字符串
+  // 组件vnode.type是个对象, 而普通元素vnode.type是个字符串
 
   if (typeof vnode.type === "string") {
     // 判断是不是element类型
@@ -20,33 +23,35 @@ function patch(vnode: any, container: any) {
   }
 }
 
-function processComponent(vnode: any, container: any) {
+function processComponent(vnode: VNode, container: HTMLElement) {
   mountComponent(vnode, container)
 }
 
-function mountComponent(vnode: any, container) {
-  const instance = createComponentInstance(vnode)
+function mountComponent(initialVnode: VNode, container: HTMLElement) {
+  const instance = createComponentInstance(initialVnode)
   setupComponent(instance)
-  setupRenderEffect(instance, container)
+  setupRenderEffect(instance, initialVnode, container)
 }
 
 
-function setupRenderEffect(instance, container) {
-  const subTree = instance.render()
+function setupRenderEffect(instance: ComponentInternalInstance, initialVnode: VNode, container: HTMLElement) {
+  const { proxy } = instance
   // sub vnode -> patch -> element -> mountElement
+  const subTree = instance.render.call(proxy)
+  // 递归处理所有子节点
   patch(subTree, container)
-
-
+  // 所有element已经处理完成
+  initialVnode.el = subTree.el
 }
 
-function processElement(vnode, container) {
+function processElement(vnode: VNode, container: HTMLElement) {
   // 包含初始化和更新两个流程
   mountElement(vnode, container)
 }
 
-function mountElement(vnode: any, container: any) {
+function mountElement(vnode: VNode, container: HTMLElement) {
   // 分为普通元素string类型和一个子元素数组类型
-  const el = document.createElement(vnode.type)
+  const el = (vnode.el = document.createElement(vnode.type as string))
   const { children, props } = vnode
   if (typeof children === "string") {
     el.textContent = children
