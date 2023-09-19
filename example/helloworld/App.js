@@ -7,7 +7,16 @@ export const App = {
     window.self = this
     return h(
       "div",
-      { id: 'root', class: ['red', 'hard'] },
+      {
+        id: 'root',
+        class: ['red', 'hard'],
+        onClick() {
+          console.log("click event")
+        },
+        onMousedown(){
+          console.log('onMousedown');
+        }
+      },
       // `hi, ${this.msg}`
       [h("p", { class: 'red' }, 'hello ' + this.msg), h("p", { class: 'blue' }, 'my-vue3')]
     )
