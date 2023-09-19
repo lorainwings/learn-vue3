@@ -1,4 +1,5 @@
 import { isObject } from "../shared"
+import { ShapeFlags } from "../shared/shapeFlags"
 import { createComponentInstance, setupComponent } from "./component"
 import type { ComponentInternalInstance } from "./component"
 import type { VNode } from "./vnode"
@@ -14,10 +15,10 @@ function patch(vnode: VNode, container: HTMLElement) {
   // 按类型处理vnode
   // 组件vnode.type是个对象, 而普通元素vnode.type是个字符串
 
-  if (typeof vnode.type === "string") {
+  if (vnode.shapeFlag & ShapeFlags.ELEMENT) {
     // 判断是不是element类型
     processElement(vnode, container)
-  } else if (isObject(vnode.type)) {
+  } else if (vnode.shapeFlag & ShapeFlags.STATEFUL_COMPONENT) {
     // 如果是组件类型
     processComponent(vnode, container)
   }
@@ -52,11 +53,11 @@ function processElement(vnode: VNode, container: HTMLElement) {
 function mountElement(vnode: VNode, container: HTMLElement) {
   // 分为普通元素string类型和一个子元素数组类型
   const el = (vnode.el = document.createElement(vnode.type as string))
-  const { children, props } = vnode
-  if (typeof children === "string") {
-    el.textContent = children
-  } else if (Array.isArray(children)) {
-    mountChildren(children, el)
+  const { children, props, shapeFlag } = vnode
+  if (shapeFlag & ShapeFlags.TEXT_CHILDREN) {
+    el.textContent = children as string
+  } else if (shapeFlag & ShapeFlags.ARRAY_CHILDREN) {
+    mountChildren(children as VNode[], el)
   }
   for (const key in props) {
     const val = props[key]
