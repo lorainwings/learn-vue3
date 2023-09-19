@@ -1,8 +1,11 @@
 import { h } from "../../lib/vue-next.esm.js"
+import { Foo } from "./Foo.js"
+
 
 export const App = {
   // .vue3
   // template
+  name:'App',
   render() {
     window.self = this
     return h(
@@ -13,12 +16,13 @@ export const App = {
         onClick() {
           console.log("click event")
         },
-        onMousedown(){
+        onMousedown() {
           console.log('onMousedown');
         }
       },
       // `hi, ${this.msg}`
-      [h("p", { class: 'red' }, 'hello ' + this.msg), h("p", { class: 'blue' }, 'my-vue3')]
+      // [h("p", { class: 'red' }, 'hello ' + this.msg), h("p", { class: 'blue' }, 'my-vue3')]
+      [h('div', {}, 'hi' + this.msg), h(Foo, { count: 1 })]
     )
   },
   setup() {

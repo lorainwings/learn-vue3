@@ -1,3 +1,5 @@
+import { hasOwn } from "../shared"
+
 // 需要代理哪些常用响应属性
 export const publicPropertiesMap = {
   $el: (i) => i.vnode.el,
@@ -7,9 +9,11 @@ export const publicPropertiesMap = {
 export const PublicInstanceProxyHandles = {
   get({ _: instance }, key) {
     // setupState
-    const { setupState } = instance
-    if (key in setupState) {
-      return Reflect.get(setupState, key)
+    const { setupState, props } = instance
+    if (hasOwn(setupState, key)) {
+      return setupState[key]
+    } else if (hasOwn(props, key)) {
+      return props[key]
     }
 
     // $el属性
@@ -21,3 +25,5 @@ export const PublicInstanceProxyHandles = {
     // $data
   }
 }
+
+
