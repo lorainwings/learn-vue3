@@ -1,6 +1,6 @@
-import { extend, isObject } from "../shared"
-import { track, trigger } from "./effect"
-import { ReactiveFlags, reactive, readonly } from './reactive';
+import { extend, isObject } from '../shared'
+import { track, trigger } from './effect'
+import { ReactiveFlags, reactive, readonly } from './reactive'
 
 // 防止每次引用都会执行一次createGetter/createSetter
 // 缓存之后, 只会创建一次
@@ -33,7 +33,7 @@ function createGetter(isReadonly = false, shallow = false) {
 
 function createSetter() {
   return function set(target, key, value) {
-    const res = Reflect.set(target, key, value);
+    const res = Reflect.set(target, key, value)
     trigger(target, key)
     return res
   }

@@ -1,10 +1,7 @@
-import { isObject } from "../shared"
-import { ShapeFlags } from "../shared/shapeFlags"
-import { createComponentInstance, setupComponent } from "./component"
-import type { ComponentInternalInstance } from "./component"
-import type { VNode } from "./vnode"
-
-
+import { ShapeFlags } from '../shared/shapeFlags'
+import { createComponentInstance, setupComponent } from './component'
+import type { ComponentInternalInstance } from './component'
+import type { VNode } from './vnode'
 
 export function render(vnode: VNode, container: HTMLElement) {
   // 调用patch
@@ -34,8 +31,11 @@ function mountComponent(initialVnode: VNode, container: HTMLElement) {
   setupRenderEffect(instance, initialVnode, container)
 }
 
-
-function setupRenderEffect(instance: ComponentInternalInstance, initialVnode: VNode, container: HTMLElement) {
+function setupRenderEffect(
+  instance: ComponentInternalInstance,
+  initialVnode: VNode,
+  container: HTMLElement
+) {
   const { proxy } = instance
   // sub vnode -> patch -> element -> mountElement
   const subTree = instance.render.call(proxy)
@@ -76,8 +76,7 @@ function mountElement(vnode: VNode, container: HTMLElement) {
 }
 
 function mountChildren(children: any[], el: any) {
-  children.forEach(v => {
+  children.forEach((v) => {
     patch(v, el)
   })
 }
-

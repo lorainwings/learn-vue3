@@ -1,23 +1,22 @@
-import { h } from "../../lib/vue-next.esm.js"
-import { Foo } from "./Foo.js"
-
+import { h } from '../../lib/vue-next.esm.js'
+import { Foo } from './Foo.js'
 
 export const App = {
   // .vue3
   // template
-  name:'App',
+  name: 'App',
   render() {
     window.self = this
     return h(
-      "div",
+      'div',
       {
         id: 'root',
         class: ['red', 'hard'],
         onClick() {
-          console.log("click event")
+          console.log('click event')
         },
         onMousedown() {
-          console.log('onMousedown');
+          console.log('onMousedown')
         }
       },
       // `hi, ${this.msg}`

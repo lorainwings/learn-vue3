@@ -1,12 +1,12 @@
-import { ReactiveEffect } from "./effect";
+import { ReactiveEffect } from './effect'
 
 class ComputedRefImpl {
-  private _value: unknown;
+  private _value: unknown
   // private _getter: () => unknown;
   // 如果脏值, 就获取新值, 否则使用缓存值
-  private _isDirty: boolean = true;
-  private _effect: ReactiveEffect;
-  
+  private _isDirty: boolean = true
+  private _effect: ReactiveEffect
+
   constructor(getter) {
     // this._getter = getter;
     this._effect = new ReactiveEffect(getter, () => {
@@ -25,7 +25,6 @@ class ComputedRefImpl {
   }
 }
 
-
 export function computed(getter) {
-  return new ComputedRefImpl(getter);
+  return new ComputedRefImpl(getter)
 }

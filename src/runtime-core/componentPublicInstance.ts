@@ -1,10 +1,9 @@
-import { hasOwn } from "../shared"
+import { hasOwn } from '../shared'
 
 // 需要代理哪些常用响应属性
 export const publicPropertiesMap = {
-  $el: (i) => i.vnode.el,
+  $el: (i) => i.vnode.el
 }
-
 
 export const PublicInstanceProxyHandles = {
   get({ _: instance }, key) {
@@ -25,5 +24,3 @@ export const PublicInstanceProxyHandles = {
     // $data
   }
 }
-
-

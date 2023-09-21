@@ -1,10 +1,10 @@
-import { ShapeFlags } from "../shared/shapeFlags"
+import { ShapeFlags } from '../shared/shapeFlags'
 
 export interface VNode {
   type: Record<string, any> | string
   props: Record<string, any>
-  children: VNode[] | string,
-  shapeFlag: ShapeFlags,
+  children: VNode[] | string
+  shapeFlag: ShapeFlags
   el: null | HTMLElement
 }
 
@@ -26,6 +26,7 @@ export function createVNode(type, props?, children?): VNode {
   return vnode
 }
 function getShapeFlag(type: Record<string, any> | string) {
-  return typeof type === 'string' ? ShapeFlags.ELEMENT : ShapeFlags.STATEFUL_COMPONENT
+  return typeof type === 'string'
+    ? ShapeFlags.ELEMENT
+    : ShapeFlags.STATEFUL_COMPONENT
 }
-

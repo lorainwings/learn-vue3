@@ -1,9 +1,13 @@
-import { shallowReadonly } from "../reactivity/reactive"
-import { initProps } from "./componentProps"
-import { PublicInstanceProxyHandles } from "./componentPublicInstance"
-import type { VNode } from "./vnode"
+import { shallowReadonly } from '../reactivity/reactive'
+import { initProps } from './componentProps'
+import { PublicInstanceProxyHandles } from './componentPublicInstance'
+import type { VNode } from './vnode'
 
-type ProxyInstanceType<T = ProxyConstructor> = T extends new (...args: any) => infer R ? R : any
+type ProxyInstanceType<T = ProxyConstructor> = T extends new (
+  ...args: any
+) => infer R
+  ? R
+  : any
 
 export interface ComponentInternalInstance {
   vnode: VNode
@@ -59,4 +63,3 @@ function finishComponent(instance: any) {
 
   instance.render = Component.render
 }
-

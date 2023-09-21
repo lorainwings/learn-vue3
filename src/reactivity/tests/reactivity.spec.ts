@@ -1,5 +1,4 @@
-import { isProxy, isReactive, reactive } from "../reactive"
-
+import { isProxy, isReactive, reactive } from '../reactive'
 
 describe('reactive', () => {
   it('reactive data be proxied', () => {

@@ -1,23 +1,26 @@
-import { extend } from "../shared";
+import { extend } from '../shared'
 
 interface Runner {
-  (): void;
+  (): void
   effect: ReactiveEffect
 }
 
 // 全局存储当前组件的effect
-let activeEffect: ReactiveEffect;
+let activeEffect: ReactiveEffect
 // stop后是否应该收集依赖
-let shouldTrack;
+let shouldTrack
 const targetMap = new Map()
 
 export class ReactiveEffect {
   private _fn: () => unknown
-  public deps: Set<ReactiveEffect>[] = [];
+  public deps: Set<ReactiveEffect>[] = []
   // 防止多次调用stop
-  public active: boolean = true;
-  public onStop = () => { }
-  constructor(fn: () => void, public scheduler?) {
+  public active: boolean = true
+  public onStop = () => {}
+  constructor(
+    fn: () => void,
+    public scheduler?
+  ) {
     // 组件更新函数
     this._fn = fn
     this.scheduler = scheduler
@@ -31,7 +34,7 @@ export class ReactiveEffect {
     // 执行this._fn后, 会读取响应式变量, 接着触发了get陷阱函数
     // 在陷阱函数的track中, 会通过dep来保存当前的ReactEffect实例
     // 因此, 同一个组件只有一个ReactEffect实例
-    activeEffect = this;
+    activeEffect = this
     const result = this._fn()
     shouldTrack = false
     return result
@@ -79,15 +82,15 @@ export function isTracking() {
 export function trigger(target, key) {
   const depsMap = targetMap.get(target)
   const dep = depsMap.get(key)
-  triggerEffects(dep);
+  triggerEffects(dep)
 }
 
 export function triggerEffects(dep: any) {
   for (const effect of dep) {
     if (effect.scheduler) {
-      effect.scheduler();
+      effect.scheduler()
     } else {
-      effect.run();
+      effect.run()
     }
   }
 }
@@ -103,7 +106,6 @@ export function trackEffects(deps) {
   activeEffect.deps.push(deps)
 }
 
-
 export function effect(fn, options: any = {}) {
   const scheduler = options.scheduler
   const _effect = new ReactiveEffect(fn, scheduler)
@@ -117,7 +119,6 @@ export function effect(fn, options: any = {}) {
 
   return runner
 }
-
 
 export function stop(runner) {
   runner.effect.stop()

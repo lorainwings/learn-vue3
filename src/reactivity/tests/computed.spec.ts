@@ -1,8 +1,8 @@
-import { computed } from "../computed"
-import { reactive } from "../reactive"
+import { computed } from '../computed'
+import { reactive } from '../reactive'
 
-describe("computed", () => {
-  it("happy path", () => {
+describe('computed', () => {
+  it('happy path', () => {
     // computed计算属性与ref类型, 调用也需要使用.value
     // 但是computed计算属性的value是可以缓存的
     const user = reactive({
@@ -14,7 +14,7 @@ describe("computed", () => {
     expect(age.value).toBe(1)
   })
 
-  it("should computed lazily", () => {
+  it('should computed lazily', () => {
     const obj = reactive({
       foo: 1
     })
@@ -24,7 +24,7 @@ describe("computed", () => {
     const oValue = computed(getter)
 
     // lazy
-    expect (getter).not.toHaveBeenCalled()
+    expect(getter).not.toHaveBeenCalled()
     expect(oValue.value).toBe(1)
     expect(getter).toHaveBeenCalledTimes(1)
 

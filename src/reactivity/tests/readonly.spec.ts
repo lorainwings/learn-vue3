@@ -1,6 +1,6 @@
-import { isReadonly, readonly } from "../reactive"
+import { isReadonly, readonly } from '../reactive'
 
-describe("readonly", () => {
+describe('readonly', () => {
   it('happy path', () => {
     // 无法被set, 不需要收集依赖
     const original = { foo: 1, bar: { baz: 2 } }
