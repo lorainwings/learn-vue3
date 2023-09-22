@@ -2,7 +2,9 @@ import { hasOwn } from '../shared'
 
 // 需要代理哪些常用响应属性
 export const publicPropertiesMap = {
-  $el: (i) => i.vnode.el
+  $el: (i) => i.vnode.el,
+  // $slots
+  $slots: (i) => i.slots
 }
 
 export const PublicInstanceProxyHandles = {
@@ -15,7 +17,7 @@ export const PublicInstanceProxyHandles = {
       return props[key]
     }
 
-    // $el属性
+    // $el属性 | $slots属性
     const publicGetter = publicPropertiesMap[key]
     if (publicGetter) {
       return publicGetter(instance)

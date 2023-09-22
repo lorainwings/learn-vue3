@@ -1,3 +1,4 @@
+import { isObject } from '../shared'
 import { ShapeFlags } from '../shared/shapeFlags'
 
 export interface VNode {
@@ -23,6 +24,14 @@ export function createVNode(type, props?, children?): VNode {
   } else if (Array.isArray(children)) {
     vnode.shapeFlag |= ShapeFlags.ARRAY_CHILDREN
   }
+
+  // 必须是组件类型, 且children是一个object, 那么就是一个slot类型
+  if (vnode.shapeFlag & ShapeFlags.STATEFUL_COMPONENT) {
+    if (isObject(children)) {
+      vnode.shapeFlag |= ShapeFlags.SLOTS_CHILDREN
+    }
+  }
+
   return vnode
 }
 function getShapeFlag(type: Record<string, any> | string) {

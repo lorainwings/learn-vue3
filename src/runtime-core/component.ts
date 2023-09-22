@@ -1,7 +1,8 @@
 import { shallowReadonly } from '../reactivity/reactive'
-import { emit } from '../shared'
+import { emit } from './componentEmit'
 import { initProps } from './componentProps'
 import { PublicInstanceProxyHandles } from './componentPublicInstance'
+import { initSlots } from './componentSlots'
 import type { VNode } from './vnode'
 
 type ProxyInstanceType<T = ProxyConstructor> = T extends new (
@@ -17,6 +18,7 @@ export interface ComponentInternalInstance {
   proxy: ProxyInstanceType | null
   setupState: Record<string, any>
   props: Record<string, any>
+  slots: Record<string, any>
   emit(...args: any[]): void
 }
 
@@ -26,6 +28,7 @@ export function createComponentInstance(vnode) {
     type: vnode.type,
     setupState: {},
     props: {},
+    slots: {},
     emit() {}
   } as ComponentInternalInstance
 
@@ -36,7 +39,7 @@ export function createComponentInstance(vnode) {
 
 export function setupComponent(instance) {
   initProps(instance, instance.vnode.props)
-  // initSlots()
+  initSlots(instance, instance.vnode.children)
   setupStatefulComponent(instance)
 }
 
