@@ -3,9 +3,9 @@ import { h } from '../../lib/vue-next.esm.js'
 export const Foo = {
   name: 'Foo',
   setup(props, { emit }) {
-    const emitAdd = (...args) => {
-      console.log('button click')
-      emit('add', '----------emit called------------')
+    const emitAdd = () => {
+      emit('add', '----------emit called------------', 2, 3, 4)
+      emit('add-foo', '-----add-foo called----')
     }
     return {
       emitAdd

@@ -11,6 +11,10 @@ export const App = {
         //  on+event name
         onAdd(...args) {
           console.log('onAdd', args)
+        },
+        // add-foo -> onAddFoo
+        onAddFoo(...args) {
+          console.log('onAddFoo', args)
         }
       })
     ])
