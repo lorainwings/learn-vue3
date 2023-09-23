@@ -20,18 +20,24 @@ export interface ComponentInternalInstance {
   props: Record<string, any>
   slots: Record<string, any>
   emit(...args: any[]): void
+  provides: Record<string, any>
+  parent: ComponentInternalInstance | null
 }
 
 let currentInstance: ComponentInternalInstance | null = null
 
-export function createComponentInstance(vnode) {
+export function createComponentInstance(vnode, parent) {
+  console.log('createComponentInstance', parent)
+
   const component = {
     vnode,
     type: vnode.type,
     setupState: {},
     props: {},
     slots: {},
-    emit() {}
+    emit() {},
+    provides: parent ? parent.provides : {},
+    parent
   } as ComponentInternalInstance
 
   component.emit = emit.bind(null, component)
