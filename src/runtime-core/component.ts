@@ -22,6 +22,8 @@ export interface ComponentInternalInstance {
   emit(...args: any[]): void
 }
 
+let currentInstance: ComponentInternalInstance | null = null
+
 export function createComponentInstance(vnode) {
   const component = {
     vnode,
@@ -50,10 +52,13 @@ function setupStatefulComponent(instance: any) {
   instance.proxy = new Proxy({ _: instance }, PublicInstanceProxyHandles)
   const { setup } = Component
   if (setup) {
+    setCurrentInstance(instance)
     // function Object
     const setupResult = setup(shallowReadonly(instance.props), {
       emit: instance.emit
     })
+    // setup调用完应该清空
+    setCurrentInstance(null)
     handleSetupResult(instance, setupResult)
   }
 }
@@ -72,4 +77,18 @@ function finishComponent(instance: any) {
   const Component = instance.type
 
   instance.render = Component.render
+}
+
+export function getCurrentInstance() {
+  return currentInstance
+}
+
+/**
+ * 为何需要将currentInstance的set和get封装为函数?
+ *
+ * 如果不封装, 多处修改一个全局变量, 会导致代码难以维护和跟踪, 更容易出现bug
+ * 封装统一的get和set方法, 便于后续调试和维护, 以及跟踪currentInstance的变化
+ */
+export function setCurrentInstance(instance: ComponentInternalInstance | null) {
+  currentInstance = instance
 }
