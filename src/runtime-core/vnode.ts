@@ -2,12 +2,15 @@ import { isObject } from '../shared'
 import { ShapeFlags } from '../shared/shapeFlags'
 
 export interface VNode {
-  type: Record<string, any> | string
+  type: Record<string, any> | string | symbol
   props: Record<string, any>
   children: VNode[] | string
   shapeFlag: ShapeFlags
-  el: null | HTMLElement
+  el: null | HTMLElement | Text
 }
+
+export const Fragment = Symbol('Fragment')
+export const Text = Symbol('Text')
 
 export function createVNode(type, props?, children?): VNode {
   const vnode = {
@@ -38,4 +41,8 @@ function getShapeFlag(type: Record<string, any> | string) {
   return typeof type === 'string'
     ? ShapeFlags.ELEMENT
     : ShapeFlags.STATEFUL_COMPONENT
+}
+
+export function createTextVNode(text: string) {
+  return createVNode(Text, {}, text)
 }

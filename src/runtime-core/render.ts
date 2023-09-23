@@ -1,7 +1,7 @@
 import { ShapeFlags } from '../shared/shapeFlags'
 import { createComponentInstance, setupComponent } from './component'
 import type { ComponentInternalInstance } from './component'
-import type { VNode } from './vnode'
+import { Fragment, Text, type VNode } from './vnode'
 
 export function render(vnode: VNode, container: HTMLElement) {
   // 调用patch
@@ -11,13 +11,24 @@ export function render(vnode: VNode, container: HTMLElement) {
 function patch(vnode: VNode, container: HTMLElement) {
   // 按类型处理vnode
   // 组件vnode.type是个对象, 而普通元素vnode.type是个字符串
-
-  if (vnode.shapeFlag & ShapeFlags.ELEMENT) {
-    // 判断是不是element类型
-    processElement(vnode, container)
-  } else if (vnode.shapeFlag & ShapeFlags.STATEFUL_COMPONENT) {
-    // 如果是组件类型
-    processComponent(vnode, container)
+  const { shapeFlag, type } = vnode
+  //  实现Fragment,只渲染children
+  switch (type) {
+    case Fragment:
+      processFragment(vnode, container)
+      break
+    case Text:
+      processText(vnode, container)
+      break
+    default:
+      if (shapeFlag & ShapeFlags.ELEMENT) {
+        // 判断是不是element类型
+        processElement(vnode, container)
+      } else if (shapeFlag & ShapeFlags.STATEFUL_COMPONENT) {
+        // 如果是组件类型
+        processComponent(vnode, container)
+      }
+      break
   }
 }
 
@@ -53,12 +64,12 @@ function processElement(vnode: VNode, container: HTMLElement) {
 function mountElement(vnode: VNode, container: HTMLElement) {
   // 分为普通元素string类型和一个子元素数组类型
   const el = (vnode.el = document.createElement(vnode.type as string))
-  const { children, props, shapeFlag } = vnode
+  const { props, shapeFlag } = vnode
   // 处理children
   if (shapeFlag & ShapeFlags.TEXT_CHILDREN) {
-    el.textContent = children as string
+    el.textContent = vnode.children as string
   } else if (shapeFlag & ShapeFlags.ARRAY_CHILDREN) {
-    mountChildren(children as VNode[], el)
+    mountChildren(vnode, el)
   }
   // props
   for (const key in props) {
@@ -75,8 +86,18 @@ function mountElement(vnode: VNode, container: HTMLElement) {
   container.append(el)
 }
 
-function mountChildren(children: any[], el: any) {
-  children.forEach((v) => {
+function mountChildren(vnode: VNode, el: any) {
+  ;(vnode.children as VNode[]).forEach((v) => {
     patch(v, el)
   })
+}
+
+function processFragment(vnode: VNode, container: HTMLElement) {
+  mountChildren(vnode, container)
+}
+
+function processText(vnode: VNode, container: HTMLElement) {
+  const { children } = vnode
+  const textNode = (vnode.el = document.createTextNode(children as string))
+  container.append(textNode)
 }

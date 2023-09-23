@@ -1,4 +1,4 @@
-import { h } from '../../lib/vue-next.esm.js'
+import { h, createTextVNode } from '../../lib/vue-next.esm.js'
 import { Foo } from './Foo.js'
 
 export const App = {
@@ -36,7 +36,11 @@ export const App = {
        *  因此需要在子组件中定义一个函数, 通过函数的参数获取到子组件的作用域数据
        */
       {
-        header: ({ age }) => h('p', {}, 'header' + age), // 将slots改为object
+        header: ({ age }) => [
+          h('p', {}, 'header' + age),
+          // 渲染文本节点
+          createTextVNode('你好啊')
+        ], // 将slots改为object
         footer: () => h('p', {}, 'footer')
       }
     )
