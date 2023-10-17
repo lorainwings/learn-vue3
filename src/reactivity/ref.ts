@@ -53,7 +53,7 @@ export function unRef(ref) {
 
 // proxyRefs用于自动拆包, 即不需要.value来访问ref值
 // 使用场景一般在template中, template中不需要.value来访问ref值
-export function proxyRefs<T extends Object>(
+export function proxyRefs<T extends RefImpl>(
   objectWithRefs: T
 ): Record<string, any> {
   return new Proxy(objectWithRefs, {

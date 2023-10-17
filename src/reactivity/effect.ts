@@ -34,6 +34,7 @@ export class ReactiveEffect {
     // 执行this._fn后, 会读取响应式变量, 接着触发了get陷阱函数
     // 在陷阱函数的track中, 会通过dep来保存当前的ReactEffect实例
     // 因此, 同一个组件只有一个ReactEffect实例
+    // eslint-disable-next-line @typescript-eslint/no-this-alias
     activeEffect = this
     const result = this._fn()
     shouldTrack = false

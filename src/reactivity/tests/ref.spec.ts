@@ -61,7 +61,7 @@ describe('ref', () => {
       age: ref(10),
       name: 'xiaoming'
     }
-    const proxyUser = proxyRefs(user)
+    const proxyUser = proxyRefs(user as any)
     expect(user.age.value).toBe(10)
     expect(proxyUser.age).toBe(10)
     expect(proxyUser.name).toBe('xiaoming')
