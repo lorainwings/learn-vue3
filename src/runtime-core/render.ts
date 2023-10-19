@@ -1,3 +1,4 @@
+import { effect } from '../reactivity'
 import { ShapeFlags } from '../shared/shapeFlags'
 import { createComponentInstance, setupComponent } from './component'
 import type { ComponentInternalInstance } from './component'
@@ -19,39 +20,47 @@ export function createRenderer(options: RendererOptions) {
 
   function render(vnode: VNode, container: HTMLElement) {
     // 调用patch
-    patch(vnode, container, null)
+    patch(null, vnode, container, null)
   }
 
-  function patch(vnode: VNode, container: HTMLElement, parentComponent) {
+  // n1 老虚拟节点
+  // n2 新虚拟节点
+  function patch(
+    n1: VNode | null,
+    n2: VNode,
+    container: HTMLElement,
+    parentComponent
+  ) {
     // 按类型处理vnode
     // 组件vnode.type是个对象, 而普通元素vnode.type是个字符串
-    const { shapeFlag, type } = vnode
+    const { shapeFlag, type } = n2
     //  实现Fragment,只渲染children
     switch (type) {
       case Fragment:
-        processFragment(vnode, container, parentComponent)
+        processFragment(n1, n2, container, parentComponent)
         break
       case Text:
-        processText(vnode, container)
+        processText(n1, n2, container)
         break
       default:
         if (shapeFlag & ShapeFlags.ELEMENT) {
           // 判断是不是element类型
-          processElement(vnode, container, parentComponent)
+          processElement(n1, n2, container, parentComponent)
         } else if (shapeFlag & ShapeFlags.STATEFUL_COMPONENT) {
           // 如果是组件类型
-          processComponent(vnode, container, parentComponent)
+          processComponent(n1, n2, container, parentComponent)
         }
         break
     }
   }
 
   function processComponent(
-    vnode: VNode,
+    n1: VNode | null,
+    n2: VNode,
     container: HTMLElement,
     parentComponent
   ) {
-    mountComponent(vnode, container, parentComponent)
+    mountComponent(n2, container, parentComponent)
   }
 
   function mountComponent(
@@ -69,22 +78,50 @@ export function createRenderer(options: RendererOptions) {
     initialVnode: VNode,
     container: HTMLElement
   ) {
-    const { proxy } = instance
-    // sub vnode -> patch -> element -> mountElement
-    const subTree = instance.render.call(proxy)
-    // 递归处理所有子节点
-    patch(subTree, container, instance)
-    // 所有element已经处理完成
-    initialVnode.el = subTree.el
+    effect(() => {
+      // 初始化流程
+      if (!instance.isMounted) {
+        console.log('init')
+        const { proxy } = instance
+        // sub vnode -> patch -> element -> mountElement
+        const subTree = (instance.subTree = instance.render.call(proxy))
+        // 递归处理所有子节点
+        patch(null, subTree, container, instance)
+        // 所有element已经处理完成
+        initialVnode.el = subTree.el
+        instance.isMounted = true
+      }
+      // 更新流程
+      else {
+        console.log('update')
+        const { proxy } = instance
+        const subTree = instance.render.call(proxy)
+        const prevSubTree = instance.subTree
+        instance.subTree = subTree
+        patch(prevSubTree, subTree, container, instance)
+      }
+    })
   }
 
   function processElement(
-    vnode: VNode,
+    n1: VNode | null,
+    n2: VNode,
     container: HTMLElement,
     parentComponent
   ) {
     // 包含初始化和更新两个流程
-    mountElement(vnode, container, parentComponent)
+    if (!n1) {
+      mountElement(n2, container, parentComponent)
+    } else {
+      patchElement(n1, n2, container)
+    }
+  }
+
+  function patchElement(n1, n2, container) {
+    console.log('n1-n2', n1, n2)
+
+    // patchProp
+    // patchChildren
   }
 
   function mountElement(vnode: VNode, container: HTMLElement, parentComponent) {
@@ -127,21 +164,22 @@ export function createRenderer(options: RendererOptions) {
 
   function mountChildren(vnode: VNode, el: any, parentComponent) {
     ;(vnode.children as VNode[]).forEach((v) => {
-      patch(v, el, parentComponent)
+      patch(null, v, el, parentComponent)
     })
   }
 
   function processFragment(
-    vnode: VNode,
+    n1: VNode | null,
+    n2: VNode,
     container: HTMLElement,
     parentComponent
   ) {
-    mountChildren(vnode, container, parentComponent)
+    mountChildren(n2, container, parentComponent)
   }
 
-  function processText(vnode: VNode, container: HTMLElement) {
-    const { children } = vnode
-    const textNode = (vnode.el = document.createTextNode(children as string))
+  function processText(n1: VNode | null, n2: VNode, container: HTMLElement) {
+    const { children } = n2
+    const textNode = (n2.el = document.createTextNode(children as string))
     container.append(textNode)
   }
 

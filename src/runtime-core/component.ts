@@ -1,3 +1,4 @@
+import { proxyRefs } from '../reactivity'
 import { shallowReadonly } from '../reactivity/reactive'
 import { emit } from './componentEmit'
 import { initProps } from './componentProps'
@@ -12,6 +13,8 @@ type ProxyInstanceType<T = ProxyConstructor> = T extends new (
   : any
 
 export interface ComponentInternalInstance {
+  isMounted: boolean
+  subTree: VNode
   vnode: VNode
   type: any
   render: (...args: any[]) => any
@@ -37,7 +40,9 @@ export function createComponentInstance(vnode, parent) {
     slots: {},
     emit() {},
     provides: parent ? parent.provides : {},
-    parent
+    parent,
+    isMounted: false,
+    subTree: {}
   } as ComponentInternalInstance
 
   component.emit = emit.bind(null, component)
@@ -73,7 +78,8 @@ function handleSetupResult(instance: any, setupResult: any) {
   // function Object
   // 实现function
   if (typeof setupResult === 'object') {
-    instance.setupState = setupResult
+    // 为了模版中能直接访问ref的value值, 此处先进行拆包
+    instance.setupState = proxyRefs(setupResult)
   }
   // 保证最终的组件render一定有值
   finishComponent(instance)
