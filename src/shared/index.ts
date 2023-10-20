@@ -1,3 +1,5 @@
+export const EMPTY_PROPS = {}
+
 export const extend = Object.assign
 
 export const isObject = (val) => val !== null && typeof val === 'object'
