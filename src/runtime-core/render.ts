@@ -10,13 +10,17 @@ interface RendererOptions {
   createElement: (type: any) => any
   patchProp: (el: any, key: string, val: any, next: any) => void
   insert: (child: any, parent: any, anchor?: any) => void
+  remove: (child: any) => void
+  setElementText: (el: any, text: string) => void
 }
 
 export function createRenderer(options: RendererOptions) {
   const {
     createElement: hostCreateElement,
     patchProp: hostPatchProp,
-    insert: hostInsert
+    insert: hostInsert,
+    remove: hostRemove,
+    setElementText: hostSetElementText
   } = options
 
   function render(vnode: VNode, container: HTMLElement) {
@@ -114,19 +118,78 @@ export function createRenderer(options: RendererOptions) {
     if (!n1) {
       mountElement(n2, container, parentComponent)
     } else {
-      patchElement(n1, n2, container)
+      patchElement(n1, n2, container, parentComponent)
     }
   }
 
-  function patchElement(n1, n2, container) {
+  function patchElement(n1, n2, container, parentComponent) {
     console.log('patchElement', n1, n2)
 
     // 值是不可变的, 不能直接修改props的变量值, 而是去更新容器上面的属性值
     const oldProps = n1.props || EMPTY_PROPS
     const newProps = n2.props || EMPTY_PROPS
     const el = (n2.el = n1.el)
+    patchChildren(n1, n2, el, parentComponent)
     patchProps(el, oldProps, newProps)
-    // patchChildren
+  }
+
+  function patchChildren(
+    n1: VNode,
+    n2: VNode,
+    container: HTMLElement,
+    parentComponent
+  ) {
+    const prevShapeFlag = n1.shapeFlag
+    const c1 = n1.children
+    const shapeFlag = n2.shapeFlag
+    const c2 = n2.children
+
+    /**
+     * 新旧子节点就两种类型, 文本节点和数组节点, 通过两两组合就形成四种条件
+     */
+    if (shapeFlag & ShapeFlags.TEXT_CHILDREN) {
+      /**
+       * 场景一: 老节点是数组节点, 新节点是文本节点
+       * 操作步骤: 将老节点的子节点全部删除, 然后将新节点的文本节点插入到容器中
+       */
+      if (prevShapeFlag & ShapeFlags.ARRAY_CHILDREN) {
+        // 1. 把老的children清空
+        unmountChildren(c1)
+        // 2. 设置新的text, 与场景二合并该操作
+        // hostSetElementText(container, c2 as string)
+      }
+
+      /**
+       * 场景二: 老节点是文本节点, 新节点也是文本节点
+       * 操作步骤: 直接修改文本节点的内容
+       */
+      if (c1 !== c2) {
+        hostSetElementText(container, c2 as string)
+      }
+    } else {
+      /**
+       * 场景三: 老节点是文本节点, 新节点是数组节点
+       * 操作步骤: 清空老节点的文本节点, 然后把新节点的数组节点mount到容器中
+       */
+      if (prevShapeFlag & ShapeFlags.TEXT_CHILDREN) {
+        // 1. 把老的节点先清空
+        hostSetElementText(container, '')
+        // 2. 把新节点mount到容器中
+        mountChildren(c2 as VNode[], container, parentComponent)
+      } else {
+        /**
+         * 场景四: 老节点是数组节点, 新节点也是数组节点
+         * 操作步骤: 通过diff算法对比新老节点, 然后更新, 也是最复杂的最核心的场景
+         */
+      }
+    }
+  }
+
+  function unmountChildren(children) {
+    for (let i = 0; i < children.length; i++) {
+      const el = children[i].el
+      hostRemove(el)
+    }
   }
 
   /**
@@ -175,7 +238,7 @@ export function createRenderer(options: RendererOptions) {
     if (shapeFlag & ShapeFlags.TEXT_CHILDREN) {
       el.textContent = vnode.children as string
     } else if (shapeFlag & ShapeFlags.ARRAY_CHILDREN) {
-      mountChildren(vnode, el, parentComponent)
+      mountChildren(vnode.children as VNode[], el, parentComponent)
     }
     // props
     for (const key in props) {
@@ -199,8 +262,8 @@ export function createRenderer(options: RendererOptions) {
     hostInsert(el, container)
   }
 
-  function mountChildren(vnode: VNode, el: any, parentComponent) {
-    ;(vnode.children as VNode[]).forEach((v) => {
+  function mountChildren(children: VNode[], el: any, parentComponent) {
+    children.forEach((v) => {
       patch(null, v, el, parentComponent)
     })
   }
@@ -211,7 +274,7 @@ export function createRenderer(options: RendererOptions) {
     container: HTMLElement,
     parentComponent
   ) {
-    mountChildren(n2, container, parentComponent)
+    mountChildren(n2.children as VNode[], container, parentComponent)
   }
 
   function processText(n1: VNode | null, n2: VNode, container: HTMLElement) {
