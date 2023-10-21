@@ -18,8 +18,9 @@ function patchProp(el, key, prevPropVal, nextPropVal) {
   }
 }
 
-function insert(el, parent) {
-  parent.append(el)
+function insert(child, parent, anchor) {
+  // 当anchor为null时, 相当于appendChild
+  parent.insertBefore(child, anchor || null)
 }
 
 function remove(child) {

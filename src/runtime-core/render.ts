@@ -25,7 +25,7 @@ export function createRenderer(options: RendererOptions) {
 
   function render(vnode: VNode, container: HTMLElement) {
     // 调用patch
-    patch(null, vnode, container, null)
+    patch(null, vnode, container, null, null)
   }
 
   // n1 老虚拟节点
@@ -34,7 +34,8 @@ export function createRenderer(options: RendererOptions) {
     n1: VNode | null,
     n2: VNode,
     container: HTMLElement,
-    parentComponent
+    parentComponent,
+    anchor
   ) {
     // 按类型处理vnode
     // 组件vnode.type是个对象, 而普通元素vnode.type是个字符串
@@ -42,7 +43,7 @@ export function createRenderer(options: RendererOptions) {
     //  实现Fragment,只渲染children
     switch (type) {
       case Fragment:
-        processFragment(n1, n2, container, parentComponent)
+        processFragment(n1, n2, container, parentComponent, anchor)
         break
       case Text:
         processText(n1, n2, container)
@@ -50,10 +51,10 @@ export function createRenderer(options: RendererOptions) {
       default:
         if (shapeFlag & ShapeFlags.ELEMENT) {
           // 判断是不是element类型
-          processElement(n1, n2, container, parentComponent)
+          processElement(n1, n2, container, parentComponent, anchor)
         } else if (shapeFlag & ShapeFlags.STATEFUL_COMPONENT) {
           // 如果是组件类型
-          processComponent(n1, n2, container, parentComponent)
+          processComponent(n1, n2, container, parentComponent, anchor)
         }
         break
     }
@@ -63,25 +64,28 @@ export function createRenderer(options: RendererOptions) {
     n1: VNode | null,
     n2: VNode,
     container: HTMLElement,
-    parentComponent
+    parentComponent,
+    anchor
   ) {
-    mountComponent(n2, container, parentComponent)
+    mountComponent(n2, container, parentComponent, anchor)
   }
 
   function mountComponent(
     initialVnode: VNode,
     container: HTMLElement,
-    parentComponent: ComponentInternalInstance | null
+    parentComponent: ComponentInternalInstance | null,
+    anchor
   ) {
     const instance = createComponentInstance(initialVnode, parentComponent)
     setupComponent(instance)
-    setupRenderEffect(instance, initialVnode, container)
+    setupRenderEffect(instance, initialVnode, container, anchor)
   }
 
   function setupRenderEffect(
     instance: ComponentInternalInstance,
     initialVnode: VNode,
-    container: HTMLElement
+    container: HTMLElement,
+    anchor
   ) {
     effect(() => {
       // 初始化流程
@@ -91,7 +95,7 @@ export function createRenderer(options: RendererOptions) {
         // sub vnode -> patch -> element -> mountElement
         const subTree = (instance.subTree = instance.render.call(proxy))
         // 递归处理所有子节点
-        patch(null, subTree, container, instance)
+        patch(null, subTree, container, instance, anchor)
         // 所有element已经处理完成
         initialVnode.el = subTree.el
         instance.isMounted = true
@@ -103,7 +107,7 @@ export function createRenderer(options: RendererOptions) {
         const subTree = instance.render.call(proxy)
         const prevSubTree = instance.subTree
         instance.subTree = subTree
-        patch(prevSubTree, subTree, container, instance)
+        patch(prevSubTree, subTree, container, instance, anchor)
       }
     })
   }
@@ -112,24 +116,25 @@ export function createRenderer(options: RendererOptions) {
     n1: VNode | null,
     n2: VNode,
     container: HTMLElement,
-    parentComponent
+    parentComponent,
+    anchor
   ) {
     // 包含初始化和更新两个流程
     if (!n1) {
-      mountElement(n2, container, parentComponent)
+      mountElement(n2, container, parentComponent, anchor)
     } else {
-      patchElement(n1, n2, container, parentComponent)
+      patchElement(n1, n2, container, parentComponent, anchor)
     }
   }
 
-  function patchElement(n1, n2, container, parentComponent) {
+  function patchElement(n1, n2, container, parentComponent, anchor) {
     console.log('patchElement', n1, n2)
 
     // 值是不可变的, 不能直接修改props的变量值, 而是去更新容器上面的属性值
     const oldProps = n1.props || EMPTY_PROPS
     const newProps = n2.props || EMPTY_PROPS
     const el = (n2.el = n1.el)
-    patchChildren(n1, n2, el, parentComponent)
+    patchChildren(n1, n2, el, parentComponent, anchor)
     patchProps(el, oldProps, newProps)
   }
 
@@ -137,7 +142,8 @@ export function createRenderer(options: RendererOptions) {
     n1: VNode,
     n2: VNode,
     container: HTMLElement,
-    parentComponent
+    parentComponent,
+    anchor
   ) {
     const prevShapeFlag = n1.shapeFlag
     const c1 = n1.children
@@ -175,12 +181,76 @@ export function createRenderer(options: RendererOptions) {
         // 1. 把老的节点先清空
         hostSetElementText(container, '')
         // 2. 把新节点mount到容器中
-        mountChildren(c2 as VNode[], container, parentComponent)
+        mountChildren(c2 as VNode[], container, parentComponent, anchor)
       } else {
         /**
          * 场景四: 老节点是数组节点, 新节点也是数组节点
          * 操作步骤: 通过diff算法对比新老节点, 然后更新, 也是最复杂的最核心的场景
          */
+        patchKeyedChildren(c1, c2, container, parentComponent, anchor)
+      }
+    }
+  }
+
+  function patchKeyedChildren(
+    c1,
+    c2,
+    container,
+    parentComponent,
+    parentAnchor
+  ) {
+    const l2 = c2.length
+    let i = 0 // 老节点的头指针
+    let e1 = c1.length - 1 // 老节点的尾指针
+    let e2 = l2 - 1 // 新节点的尾指针
+
+    function isSameNodeType(n1, n2) {
+      return n1.type === n2.type && n1.key === n2.key
+    }
+
+    // case1: 从左侧开始对比, 用于锁定范围
+    while (i <= e1 && i <= e2) {
+      const n1 = c1[i]
+      const n2 = c2[i]
+
+      if (isSameNodeType(n1, n2)) {
+        patch(n1, n2, container, parentComponent, parentAnchor)
+      } else {
+        break
+      }
+      i++
+    }
+
+    // case2: 从右侧开始对比, 用于锁定范围
+    while (i <= e1 && i <= e2) {
+      const n1 = c1[e1]
+      const n2 = c2[e2]
+      if (isSameNodeType(n1, n2)) {
+        patch(n1, n2, container, parentComponent, parentAnchor)
+      } else {
+        break
+      }
+      e1--
+      e2--
+    }
+
+    // case3: 新节点比老节点长, 需要创建, 包含了右侧和左侧对比
+    if (i > e1) {
+      if (i <= e2) {
+        const nextPos = e2 + 1
+        const anchor = nextPos < l2 ? c2[nextPos].el : null
+        while (i <= e2) {
+          // 从i 到 e2 循环创建
+          patch(null, c2[i], container, parentComponent, anchor)
+          i++
+        }
+      }
+    }
+    // case4: 老节点比新节点长, 需要删除
+    else if (i > e2) {
+      while (i <= e1) {
+        hostRemove(c1[i].el)
+        i++
       }
     }
   }
@@ -224,7 +294,12 @@ export function createRenderer(options: RendererOptions) {
     }
   }
 
-  function mountElement(vnode: VNode, container: HTMLElement, parentComponent) {
+  function mountElement(
+    vnode: VNode,
+    container: HTMLElement,
+    parentComponent,
+    anchor
+  ) {
     // 分为普通元素string类型和一个子元素数组类型
 
     // 此处是使用DOM API创建真实DOM元素, 为了兼容自定义渲染器, 因此需要重构
@@ -238,7 +313,7 @@ export function createRenderer(options: RendererOptions) {
     if (shapeFlag & ShapeFlags.TEXT_CHILDREN) {
       el.textContent = vnode.children as string
     } else if (shapeFlag & ShapeFlags.ARRAY_CHILDREN) {
-      mountChildren(vnode.children as VNode[], el, parentComponent)
+      mountChildren(vnode.children as VNode[], el, parentComponent, anchor)
     }
     // props
     for (const key in props) {
@@ -259,12 +334,12 @@ export function createRenderer(options: RendererOptions) {
     }
 
     // container.append(el)
-    hostInsert(el, container)
+    hostInsert(el, container, anchor)
   }
 
-  function mountChildren(children: VNode[], el: any, parentComponent) {
+  function mountChildren(children: VNode[], el: any, parentComponent, anchor) {
     children.forEach((v) => {
-      patch(null, v, el, parentComponent)
+      patch(null, v, el, parentComponent, anchor)
     })
   }
 
@@ -272,9 +347,10 @@ export function createRenderer(options: RendererOptions) {
     n1: VNode | null,
     n2: VNode,
     container: HTMLElement,
-    parentComponent
+    parentComponent,
+    anchor
   ) {
-    mountChildren(n2.children as VNode[], container, parentComponent)
+    mountChildren(n2.children as VNode[], container, parentComponent, anchor)
   }
 
   function processText(n1: VNode | null, n2: VNode, container: HTMLElement) {
