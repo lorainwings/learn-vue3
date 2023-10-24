@@ -262,6 +262,19 @@ export function createRenderer(options: RendererOptions) {
       // 新旧节点已经patch对比的数量
       let patched = 0
       const keyToIndexMap = new Map()
+      /**
+       * 优化case5.3逻辑
+       * 初始化新老下标的映射关系, 下标为在新节点中的下标位置(减去起始位置), 值为在老节点中的下标位置
+       * Note that oldIndex is offset by +1
+       * and oldIndex = 0 is a special value indicating the new node has
+       * 老节点下标为0是一个在新节点中的特殊值, 因此需要加上一个偏移+1
+       *
+       */
+
+      let moved = false
+      let maxNewIndexSoFar = 0
+      const newIndexToOldIndexMap = new Array(toBePatched)
+      for (i = 0; i < toBePatched; i++) newIndexToOldIndexMap[i] = 0
 
       // 遍历新节点, 创建映射表
       for (let i = s2; i <= e2; i++) {
@@ -275,7 +288,7 @@ export function createRenderer(options: RendererOptions) {
         const prevChild = c1[i]
 
         /**
-         * case5.1.1 老的比新的多， 那么多出来的直接就可以被干掉
+         * 优化case5.1逻辑: 老的比新的多， 那么多出来的直接就可以被干掉
          * 操作步骤 优化删除逻辑
          */
         if (patched >= toBePatched) {
@@ -296,18 +309,60 @@ export function createRenderer(options: RendererOptions) {
           }
         }
         /**
-         * case5.1.0 在老节点中存在, 新节点中不存在
+         * case5.1: 在老节点中存在, 新节点中不存在
          * 操作步骤: 删除老节点
          */
         if (newIndex === undefined) {
           hostRemove(prevChild.el)
         } else {
           /**
-           * case5.2 新节点中找打了对应的老节点
+           * 优化case5.3逻辑: 通过记录最大的newIndex, 如果当前的newIndex小于最大的newIndex, 说明位置变化了, 需要移动
+           * 新坐标的位置如果一直递增, 就不需要移动, 就不需要使用最长递增子序列算法
+           * 否则出现一个新坐标小于老坐标的情况, 那么就需要移动
+           */
+          if (newIndex >= maxNewIndexSoFar) {
+            maxNewIndexSoFar = newIndex
+          } else {
+            moved = true
+          }
+          /**
+           * e.g. 如果老节点是a, b, (c, d, e), f, g  新节点是a, b, (e, c, d), f, g
+           * 因为老节点中的元素下标可能为0, 因此存入IndexToOldIndexMap时得增加偏移量1
+           *     那么他们的映射关系为:
+           *     - c对应的newIndexToOldIndexMap下标为1, 值为2
+           *     - d对应的newIndexToOldIndexMap下标为2, 值为3
+           *     - e对应的newIndexToOldIndexMap下标为0, 值为4
+           *     结果为: [4, 2, 3], 每个值偏移了1, 因此为[5, 3, 4]
+           */
+          newIndexToOldIndexMap[newIndex - s2] = i + 1
+          /**
+           * case5.2: 新节点中找打了对应的老节点
            * 操作步骤: 通过patch递归对比然后更新
            */
           patch(prevChild, c2[newIndex], container, parentComponent, null)
           patched++
+        }
+      }
+
+      /**
+       * case5.3: 老节点在新节点中仍然存在, 但是位置变化了
+       * 操作步骤: 获取最长递增子序列, 遍历需要移动的位置, 然后进行移动
+       */
+      const increasingNewIndexSequence = moved
+        ? getSequence(newIndexToOldIndexMap)
+        : []
+      let j = increasingNewIndexSequence.length - 1
+      // 遍历新节点差异区间, 为了保证insertBefore插入的基本元素的稳定性, 因此需要倒序遍历
+      for (let i = toBePatched - 1; i >= 0; i--) {
+        const nextIndex = i + s2
+        const nextChild = c2[nextIndex].el
+        const anchor = nextIndex + 1 < l2 ? c2[nextIndex + 1].el : null
+        if (moved) {
+          if (j < 0 || i !== increasingNewIndexSequence[j]) {
+            hostInsert(nextChild, container, anchor)
+          } else {
+            j--
+          }
         }
       }
     }
@@ -420,4 +475,46 @@ export function createRenderer(options: RendererOptions) {
   return {
     createApp: createAppAPI(render)
   }
+}
+
+// https://en.wikipedia.org/wiki/Longest_increasing_subsequence
+function getSequence(arr: number[]): number[] {
+  const p = arr.slice()
+  const result = [0]
+  let i, j, u, v, c
+  const len = arr.length
+  for (i = 0; i < len; i++) {
+    const arrI = arr[i]
+    if (arrI !== 0) {
+      j = result[result.length - 1]
+      if (arr[j] < arrI) {
+        p[i] = j
+        result.push(i)
+        continue
+      }
+      u = 0
+      v = result.length - 1
+      while (u < v) {
+        c = (u + v) >> 1
+        if (arr[result[c]] < arrI) {
+          u = c + 1
+        } else {
+          v = c
+        }
+      }
+      if (arrI < arr[result[u]]) {
+        if (u > 0) {
+          p[i] = result[u - 1]
+        }
+        result[u] = i
+      }
+    }
+  }
+  u = result.length
+  v = result[u - 1]
+  while (u-- > 0) {
+    result[u] = v
+    v = p[v]
+  }
+  return result
 }

@@ -7,7 +7,12 @@ import ArrayToArray from './components/ArrayToArray.js'
 
 export const App = {
   name: 'App',
-  setup() {},
+  setup() {
+    const onClick = () => {
+      window.isChange.value = true
+    }
+    return { onClick }
+  },
   render() {
     return h(
       'div',
@@ -15,7 +20,8 @@ export const App = {
         id: 'root'
       },
       [
-        h('p', {}, '主页'),
+        h('h3', {}, '子元素节点更新流程demo'),
+        h('button', { onClick: this.onClick }, '触发更新子节点更新'),
 
         // h(ArrayToText) // 老的是array, 新的是text
 
