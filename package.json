@@ -3,8 +3,17 @@
   "version": "1.0.0",
   "description": "",
   "type": "module",
-  "main": "lib/vue-next.cjs.js",
-  "module": "lib/vue-next.esm.js",
+  "files": [
+    "lib"
+  ],
+  "main": "./lib/vue-next.cjs.js",
+  "module": "./lib/vue-next.esm.js",
+  "exports": {
+    ".": {
+      "import": "./lib/vue-next.esm.js",
+      "require": "./lib/vue-next.cjs.js"
+    }
+  },
   "scripts": {
     "test": "jest",
     "test:watch": "jest --watchAll",

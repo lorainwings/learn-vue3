@@ -1,6 +1,6 @@
 import { extend } from '../shared'
 
-interface Runner {
+export interface Runner {
   (): void
   effect: ReactiveEffect
 }
@@ -107,7 +107,7 @@ export function trackEffects(deps) {
   activeEffect.deps.push(deps)
 }
 
-export function effect(fn, options: any = {}) {
+export function effect(fn, options: any = {}): Runner {
   const scheduler = options.scheduler
   const _effect = new ReactiveEffect(fn, scheduler)
 

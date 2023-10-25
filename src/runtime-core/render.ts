@@ -3,6 +3,7 @@ import { EMPTY_PROPS } from '../shared'
 import { ShapeFlags } from '../shared/shapeFlags'
 import { createComponentInstance, setupComponent } from './component'
 import type { ComponentInternalInstance } from './component'
+import { shouldUpdateComponent } from './componentUpdateUtils'
 import { createAppAPI } from './createApp'
 import { Fragment, Text, type VNode } from './vnode'
 
@@ -67,7 +68,24 @@ export function createRenderer(options: RendererOptions) {
     parentComponent,
     anchor
   ) {
-    mountComponent(n2, container, parentComponent, anchor)
+    if (!n1) {
+      mountComponent(n2, container, parentComponent, anchor)
+    } else {
+      updateComponent(n1, n2)
+    }
+  }
+
+  function updateComponent(n1, n2) {
+    // 组件更新就是重新调用组件的render函数, 然后对比新旧vnode, 然后更新
+    // 如何在此处调用到组件的render函数呢? 可以将effect的返回值保存到实例instance.update中, 然后通过调用instance.update()来触发
+    const instance = (n2.component = n1.component)
+    if (shouldUpdateComponent(n1, n2)) {
+      instance.next = n2
+      instance.update()
+    } else {
+      n2.el = n1.el
+      instance.vnode = n2
+    }
   }
 
   function mountComponent(
@@ -76,7 +94,11 @@ export function createRenderer(options: RendererOptions) {
     parentComponent: ComponentInternalInstance | null,
     anchor
   ) {
-    const instance = createComponentInstance(initialVnode, parentComponent)
+    // 将组件实例保存在虚拟节点中, 方便后续来使用这个实例的update方法
+    const instance = (initialVnode.component = createComponentInstance(
+      initialVnode,
+      parentComponent
+    ))
     setupComponent(instance)
     setupRenderEffect(instance, initialVnode, container, anchor)
   }
@@ -87,7 +109,7 @@ export function createRenderer(options: RendererOptions) {
     container: HTMLElement,
     anchor
   ) {
-    effect(() => {
+    instance.update = effect(() => {
       // 初始化流程
       if (!instance.isMounted) {
         console.log('init')
@@ -103,13 +125,24 @@ export function createRenderer(options: RendererOptions) {
       // 更新流程
       else {
         console.log('update')
-        const { proxy } = instance
+        // 需要一个vnode
+        const { proxy, next, vnode } = instance
+        if (next) {
+          next.el = vnode.el
+          updateComponentPreRender(instance, next)
+        }
         const subTree = instance.render.call(proxy)
         const prevSubTree = instance.subTree
         instance.subTree = subTree
         patch(prevSubTree, subTree, container, instance, anchor)
       }
     })
+  }
+
+  function updateComponentPreRender(instance, nextVNode) {
+    instance.vnode = nextVNode
+    instance.next = null
+    instance.props = nextVNode.props
   }
 
   function processElement(
@@ -128,7 +161,7 @@ export function createRenderer(options: RendererOptions) {
   }
 
   function patchElement(n1, n2, container, parentComponent, anchor) {
-    console.log('patchElement', n1, n2)
+    // console.log('patchElement', n1, n2)
 
     // 值是不可变的, 不能直接修改props的变量值, 而是去更新容器上面的属性值
     const oldProps = n1.props || EMPTY_PROPS
@@ -192,6 +225,7 @@ export function createRenderer(options: RendererOptions) {
     }
   }
 
+  // 更新普通子元素节点
   function patchKeyedChildren(
     c1,
     c2,

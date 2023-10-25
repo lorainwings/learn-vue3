@@ -5,6 +5,7 @@ import { initProps } from './componentProps'
 import { PublicInstanceProxyHandles } from './componentPublicInstance'
 import { initSlots } from './componentSlots'
 import type { VNode } from './vnode'
+import type { Runner } from '../reactivity/effect'
 
 type ProxyInstanceType<T = ProxyConstructor> = T extends new (
   ...args: any
@@ -25,6 +26,8 @@ export interface ComponentInternalInstance {
   emit(...args: any[]): void
   provides: Record<string, any>
   parent: ComponentInternalInstance | null
+  update: Runner
+  next: null | VNode
 }
 
 let currentInstance: ComponentInternalInstance | null = null
@@ -40,7 +43,8 @@ export function createComponentInstance(vnode, parent) {
     provides: parent ? parent.provides : {},
     parent,
     isMounted: false,
-    subTree: {}
+    subTree: {},
+    next: null // 下次要更新的虚拟节点
   } as ComponentInternalInstance
 
   component.emit = emit.bind(null, component)
