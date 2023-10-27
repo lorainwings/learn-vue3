@@ -8,10 +8,12 @@ type StringToNumber<T extends `${NodeTypes}`> = T extends `${infer U extends
 interface AstNode {
   type: StringToNumber<`${NodeTypes}`>
   tag?: string
-  content?: {
-    type: StringToNumber<`${NodeTypes}`>
-    content: string
-  }
+  content?:
+    | {
+        type: StringToNumber<`${NodeTypes}`>
+        content: string
+      }
+    | string
 }
 
 interface RootContext {
@@ -34,8 +36,30 @@ function parseChildren(context: RootContext) {
       node = parseElement(context)
     }
   }
+  if (!node) {
+    node = parseText(context)
+  }
   nodes.push(node)
   return nodes
+}
+
+function parseText(context: RootContext): AstNode {
+  const content = parseTextData(context)
+  return {
+    type: NodeTypes.TEXT,
+    content
+  }
+}
+
+function parseTextData(
+  context: RootContext,
+  length: number = context.source.length
+) {
+  // 1. 获取content
+  const content = context.source.slice(0, length)
+  // 2. 推进
+  advanceBy(context, content.length)
+  return content
 }
 
 function parseElement(context: RootContext): AstNode {
@@ -73,9 +97,9 @@ function parseInterpolation(context: RootContext): AstNode {
   )
   advanceBy(context, openDelimiter.length)
   const rawContentLength = closeIndex - openDelimiter.length
-  const rawContent = context.source.slice(0, rawContentLength)
+  const rawContent = parseTextData(context, rawContentLength)
   const content = rawContent.trim()
-  advanceBy(context, rawContentLength + closeDelimiter.length)
+  advanceBy(context, closeDelimiter.length)
 
   return {
     type: NodeTypes.INTERPOLATION,
