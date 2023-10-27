@@ -12,7 +12,7 @@ module.exports = {
     quotes: ['error', 'single'],
     semi: ['error', 'never'],
     indent: 'off',
-    '@typescript-eslint/indent': ['error', 2],
+    // '@typescript-eslint/indent': ['error', 2],
     quotes: 'off',
     '@typescript-eslint/quotes': ['error', 'single'],
     semi: 'off',
