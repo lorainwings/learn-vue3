@@ -5,6 +5,11 @@ export interface Runner {
   effect: ReactiveEffect
 }
 
+export interface IEffectOptions {
+  scheduler?: (...args: unknown[]) => unknown
+  onStop?: (...args: unknown[]) => unknown
+}
+
 // 全局存储当前组件的effect
 let activeEffect: ReactiveEffect
 // stop后是否应该收集依赖
@@ -107,7 +112,7 @@ export function trackEffects(deps) {
   activeEffect.deps.push(deps)
 }
 
-export function effect(fn, options: any = {}): Runner {
+export function effect(fn, options: IEffectOptions = {}): Runner {
   const scheduler = options.scheduler
   const _effect = new ReactiveEffect(fn, scheduler)
 
