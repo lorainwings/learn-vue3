@@ -7,6 +7,7 @@ type StringToNumber<T extends `${NodeTypes}`> = T extends `${infer U extends
 
 interface AstNode {
   type: StringToNumber<`${NodeTypes}`>
+  children?: AstNode[]
   tag?: string
   content?:
     | {
@@ -22,29 +23,50 @@ interface RootContext {
 
 export function baseParse(content: string) {
   const context = createParserContext(content)
-  return createRoot(parseChildren(context))
+  return createRoot(parseChildren(context, []))
 }
 
-function parseChildren(context: RootContext) {
+function parseChildren(context: RootContext, ancestors: AstNode[]) {
   const nodes: AstNode[] = []
-  let node
-  const s = context.source
-  if (s.startsWith('{{')) {
-    node = parseInterpolation(context)
-  } else if (s[0] === '<') {
-    if (/[a-z]/i.test(s[1])) {
-      node = parseElement(context)
+  while (!isEnd(context, ancestors)) {
+    let node
+    const s = context.source
+    if (s.startsWith('{{')) {
+      node = parseInterpolation(context)
+    } else if (s[0] === '<') {
+      if (/[a-z]/i.test(s[1])) {
+        node = parseElement(context, ancestors)
+      }
     }
+    if (!node) {
+      node = parseText(context)
+    }
+    nodes.push(node)
   }
-  if (!node) {
-    node = parseText(context)
-  }
-  nodes.push(node)
   return nodes
 }
 
+function isEnd(context: RootContext, ancestors: AstNode[]): boolean {
+  // 1. source无值时
+  // 2. 遇到结束标签的时候
+  const s = context.source
+  if (s.startsWith('</')) {
+    for (let i = ancestors.length - 1; i >= 0; i--) {
+      const tag = ancestors[i].tag as string
+      if (startsWithEndTagOpen(s, tag)) return true
+    }
+  }
+  return !s
+}
+
 function parseText(context: RootContext): AstNode {
-  const content = parseTextData(context)
+  let endIndex = context.source.length
+  const endTokens = ['<', '{{']
+  for (let i = 0; i < endTokens.length; i++) {
+    const index = context.source.indexOf(endTokens[i])
+    if (~index && endIndex > index) endIndex = index
+  }
+  const content = parseTextData(context, endIndex)
   return {
     type: NodeTypes.TEXT,
     content
@@ -62,10 +84,24 @@ function parseTextData(
   return content
 }
 
-function parseElement(context: RootContext): AstNode {
+function parseElement(context: RootContext, ancestors: AstNode[]): AstNode {
   const element = parseTag(context, TagType.Start)
-  parseTag(context, TagType.End)
+  ancestors.push(element)
+  element.children = parseChildren(context, ancestors)
+  ancestors.pop()
+  if (startsWithEndTagOpen(context.source, element!.tag as string)) {
+    parseTag(context, TagType.End)
+  } else {
+    throw Error('element tag not match')
+  }
   return element
+}
+
+function startsWithEndTagOpen(source: string, tag: string) {
+  return (
+    source.startsWith('<') &&
+    source.slice(2, 2 + tag!.length).toLowerCase() === tag.toLocaleLowerCase()
+  )
 }
 
 function parseTag(context: RootContext, type: TagType.Start): AstNode
