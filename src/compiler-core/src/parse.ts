@@ -1,11 +1,9 @@
 import { NodeTypes, TagType } from './ast'
 
-type StringToNumber<T extends `${NodeTypes}`> = T extends `${infer U extends
-  number}`
-  ? U
-  : never
+export type StringToNumber<T extends `${NodeTypes}`> =
+  T extends `${infer U extends number}` ? U : never
 
-interface AstNode {
+export interface AstNode {
   type: StringToNumber<`${NodeTypes}`>
   children?: AstNode[]
   tag?: string
@@ -17,7 +15,7 @@ interface AstNode {
     | string
 }
 
-interface RootContext {
+export interface RootContext {
   source: string
 }
 
@@ -64,6 +62,7 @@ function parseText(context: RootContext): AstNode {
   const endTokens = ['<', '{{']
   for (let i = 0; i < endTokens.length; i++) {
     const index = context.source.indexOf(endTokens[i])
+    // 首次先将endIndex设置一个下标值, 下一次进入循环就会判断比上一次小的下标才会赋值, 最终找到最小的下标
     if (~index && endIndex > index) endIndex = index
   }
   const content = parseTextData(context, endIndex)
