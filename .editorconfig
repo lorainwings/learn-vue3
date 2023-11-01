@@ -5,6 +5,7 @@ root = true
 
 [*]
 charset = utf-8
+# 设置space使用index_size, 设置为tab使用tab_width
 indent_style = space
 indent_size = 2
 end_of_line = lf

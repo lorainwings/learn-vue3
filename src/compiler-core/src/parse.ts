@@ -19,6 +19,10 @@ export interface RootContext {
   source: string
 }
 
+export type ParseTagReturnType<T extends TagType> = T extends TagType.Start
+  ? AstNode
+  : undefined
+
 export function baseParse(content: string) {
   const context = createParserContext(content)
   return createRoot(parseChildren(context, []))
@@ -103,9 +107,12 @@ function startsWithEndTagOpen(source: string, tag: string) {
   )
 }
 
-function parseTag(context: RootContext, type: TagType.Start): AstNode
-function parseTag(context: RootContext, type: TagType.End): undefined
-function parseTag(context: RootContext, type: TagType): AstNode | undefined {
+// function parseTag(context: RootContext, type: TagType.Start): AstNode
+// function parseTag(context: RootContext, type: TagType.End): undefined
+function parseTag<T extends TagType>(
+  context: RootContext,
+  type: T
+): ParseTagReturnType<T> {
   // 1. 解析tag
   const match = /^<\/?([a-z]+)/i.exec(context.source)
   const tag = match![1]
@@ -113,13 +120,13 @@ function parseTag(context: RootContext, type: TagType): AstNode | undefined {
   advanceBy(context, 1)
 
   // 处理结束标签就不需要返回值了
-  if (type === TagType.End) return
+  if (type === TagType.End) return void 0 as ParseTagReturnType<T>
 
   // 2. 删除处理完的代码
   return {
     type: NodeTypes.ELEMENT,
     tag
-  }
+  } as ParseTagReturnType<T>
 }
 
 function parseInterpolation(context: RootContext): AstNode {
