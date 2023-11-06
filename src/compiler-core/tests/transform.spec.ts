@@ -1,5 +1,5 @@
 import { NodeTypes } from '../src/ast'
-import { type AstNode, baseParse } from '../src/parse'
+import { baseParse } from '../src/parse'
 import { transform } from '../src/transform'
 
 describe('transform', () => {
@@ -15,7 +15,7 @@ describe('transform', () => {
       nodeTransforms: [plugin]
     })
 
-    const nodeText = ast.children?.[0]?.children?.[0] as AstNode
+    const nodeText = ast.children[0].children[0]
     expect(nodeText.content).toBe('hello, world')
   })
 })

@@ -4,8 +4,8 @@ export type StringToNumber<T extends `${NodeTypes}`> =
   T extends `${infer U extends number}` ? U : never
 
 export interface AstNode {
-  type: StringToNumber<`${NodeTypes}`>
-  children?: AstNode[]
+  codegenNode?: AstNodeElement
+  type?: StringToNumber<`${NodeTypes}`>
   tag?: string
   content?:
     | {
@@ -15,12 +15,16 @@ export interface AstNode {
     | string
 }
 
+export interface AstNodeElement extends AstNode {
+  children: AstNodeElement[]
+}
+
 export interface RootContext {
   source: string
 }
 
 export type ParseTagReturnType<T extends TagType> = T extends TagType.Start
-  ? AstNode
+  ? AstNodeElement
   : undefined
 
 export function baseParse(content: string) {
@@ -28,8 +32,8 @@ export function baseParse(content: string) {
   return createRoot(parseChildren(context, []))
 }
 
-function parseChildren(context: RootContext, ancestors: AstNode[]) {
-  const nodes: AstNode[] = []
+function parseChildren(context: RootContext, ancestors: AstNodeElement[]) {
+  const nodes: AstNodeElement[] = []
   while (!isEnd(context, ancestors)) {
     let node
     const s = context.source
@@ -87,7 +91,10 @@ function parseTextData(
   return content
 }
 
-function parseElement(context: RootContext, ancestors: AstNode[]): AstNode {
+function parseElement(
+  context: RootContext,
+  ancestors: AstNodeElement[]
+): AstNodeElement {
   const element = parseTag(context, TagType.Start)
   ancestors.push(element)
   element.children = parseChildren(context, ancestors)
@@ -156,7 +163,7 @@ function advanceBy(context: RootContext, length: number) {
   context.source = context.source.slice(length)
 }
 
-function createRoot(children: AstNode[]) {
+function createRoot(children: AstNodeElement[]): AstNodeElement {
   return {
     children
   }
