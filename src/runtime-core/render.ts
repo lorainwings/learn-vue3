@@ -117,7 +117,11 @@ export function createRenderer(options: RendererOptions) {
           console.log('init')
           const { proxy } = instance
           // sub vnode -> patch -> element -> mountElement
-          const subTree = (instance.subTree = instance.render.call(proxy))
+          // 后续render函数的第一个参数_ctx也需要传递为proxy
+          const subTree = (instance.subTree = instance.render.call(
+            proxy,
+            proxy
+          ))
           // 递归处理所有子节点
           patch(null, subTree, container, instance, anchor)
           // 所有element已经处理完成
@@ -133,7 +137,7 @@ export function createRenderer(options: RendererOptions) {
             next.el = vnode.el
             updateComponentPreRender(instance, next)
           }
-          const subTree = instance.render.call(proxy)
+          const subTree = instance.render.call(proxy, proxy)
           const prevSubTree = instance.subTree
           instance.subTree = subTree
           patch(prevSubTree, subTree, container, instance, anchor)

@@ -13,6 +13,8 @@ export interface VNode {
 export const Fragment = Symbol('Fragment')
 export const Text = Symbol('Text')
 
+export { createVNode as createElementVNode }
+
 export function createVNode(type, props?, children?): VNode {
   const vnode = {
     // type就是原来的组件选项对象

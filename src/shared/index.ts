@@ -1,3 +1,5 @@
+export * from './toDisplayString'
+
 export const EMPTY_PROPS = {}
 
 export const extend = Object.assign
