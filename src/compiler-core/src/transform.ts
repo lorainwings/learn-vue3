@@ -1,6 +1,6 @@
 import { NodeTypes } from './ast'
 import type { AstNode, AstNodeElement } from './parse'
-import { TO_DISPLAY_STRING, helperMapName } from './runtimeHeplers'
+import { TO_DISPLAY_STRING } from './runtimeHeplers'
 
 interface Transform {
   (node: AstNode, context): unknown
@@ -11,8 +11,8 @@ interface TransformOptions {
 
 type TransformContext = TransformOptions & {
   root: AstNode
-  helpers: Map<string, any>
-  helper(key: string): void
+  helpers: Map<symbol, any>
+  helper(key: symbol): void
 }
 
 export function transform(
@@ -35,8 +35,8 @@ function createTransformContext(
   const context = {
     root,
     nodeTransforms: options.nodeTransforms || [],
-    helpers: new Map<string, any>(),
-    helper(key: string): void {
+    helpers: new Map<symbol, any>(),
+    helper(key: symbol): void {
       context.helpers.set(key, 1)
     }
   }
@@ -45,10 +45,17 @@ function createTransformContext(
 
 function traverseNode(node: AstNodeElement, context: TransformContext) {
   const { nodeTransforms } = context
-  nodeTransforms.forEach((transform) => transform(node, context))
+
+  const exitFns: any = []
+  for (let i = 0; i < nodeTransforms.length; i++) {
+    const transform = nodeTransforms[i]
+    const onExit = transform(node, context)
+    if (onExit) exitFns.push(onExit)
+  }
+
   switch (node.type) {
     case NodeTypes.INTERPOLATION:
-      context.helper(helperMapName[TO_DISPLAY_STRING])
+      context.helper(TO_DISPLAY_STRING)
       break
 
     // case中没有break, 一旦满足该case条件开始执行当前case, 但后续的case将不再判断条件而直接执行, 直到遇到break跳出switch为止
@@ -60,6 +67,11 @@ function traverseNode(node: AstNodeElement, context: TransformContext) {
 
     default:
       break
+  }
+
+  let i = exitFns.length
+  while (i--) {
+    exitFns[i]()
   }
 }
 
@@ -74,5 +86,10 @@ function traverseChildren(node: AstNodeElement, context: TransformContext) {
 }
 
 function createRootCodegen(root: AstNodeElement) {
-  root.codegenNode = root.children[0]
+  const child = root.children[0]
+  if (child.type === NodeTypes.ELEMENT) {
+    root.codegenNode = child.codegenNode
+  } else {
+    root.codegenNode = root.children[0]
+  }
 }

@@ -11,6 +11,7 @@ export interface AstNode {
 }
 
 export interface AstNodeElement extends AstNode {
+  props?: Record<string, any>
   helpers: (() => void)[]
   children: AstNodeElement[]
 }

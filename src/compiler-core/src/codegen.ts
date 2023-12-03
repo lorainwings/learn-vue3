@@ -1,6 +1,11 @@
+import { isString } from '../../shared'
 import { NodeTypes } from './ast'
 import type { AstNodeElement } from './parse'
-import { TO_DISPLAY_STRING, helperMapName } from './runtimeHeplers'
+import {
+  CREATE_ELEMENT_VNODE,
+  TO_DISPLAY_STRING,
+  helperMapName
+} from './runtimeHeplers'
 
 interface ICodegenContext {
   code: string
@@ -32,7 +37,7 @@ export function generate(ast: AstNodeElement) {
 function genFunctionPreamble(ast: AstNodeElement, context) {
   const { push } = context
   const VueBinging = 'Vue'
-  const aliasHelper = (s) => `${s}:_${s}`
+  const aliasHelper = (s) => `${helperMapName[s]}:_${helperMapName[s]}`
   if (ast.helpers.length > 0) {
     push(`const { ${ast.helpers.map(aliasHelper).join(', ')} } = ${VueBinging}`)
   }
@@ -57,9 +62,30 @@ function genNode(
       genExpression(node, context)
       break
 
+    case NodeTypes.ELEMENT:
+      genElement(node, context)
+      break
+
+    case NodeTypes.COMPOUND_EXPRESSION:
+      genCompoundExpress(node, context)
+      break
+
     default:
       break
   }
+}
+
+function genElement(node: AstNodeElement, context: ICodegenContext) {
+  const { push, helper } = context
+  const { tag, children, props } = node
+
+  push(`${helper(CREATE_ELEMENT_VNODE)}(`)
+
+  genNodeList(genNullable([tag, props, children]), context)
+
+  // genNode(children as unknown as AstNodeElement, context)
+
+  push(')')
 }
 
 function genText(node: AstNodeElement, context: ICodegenContext) {
@@ -90,4 +116,37 @@ function genInterpolation(node: AstNodeElement, context: ICodegenContext) {
 function genExpression(node: AstNodeElement, context: ICodegenContext) {
   const { push } = context
   push(`${node.content}`)
+}
+
+function genCompoundExpress(node: AstNodeElement, context: ICodegenContext) {
+  const { push } = context
+  const children = node.children
+  for (let index = 0; index < children.length; index++) {
+    const child = children[index]
+    if (isString(child)) {
+      push(child)
+    } else {
+      genNode(child, context)
+    }
+  }
+}
+
+function genNullable(args: any) {
+  return args.map((arg) => arg || 'null')
+}
+
+function genNodeList(nodes, context) {
+  const { push } = context
+  for (let i = 0; i < nodes.length; i++) {
+    const node = nodes[i]
+    if (isString(node)) {
+      push(node)
+    } else {
+      genNode(node, context)
+    }
+
+    if (i < nodes.length - 1) {
+      push(', ')
+    }
+  }
 }
