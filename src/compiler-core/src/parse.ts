@@ -7,15 +7,11 @@ export interface AstNode {
   codegenNode?: AstNodeElement
   type?: StringToNumber<`${NodeTypes}`>
   tag?: string
-  content?:
-    | {
-        type: StringToNumber<`${NodeTypes}`>
-        content: string
-      }
-    | string
+  content?: AstNode | string
 }
 
 export interface AstNodeElement extends AstNode {
+  helpers: (() => void)[]
   children: AstNodeElement[]
 }
 
@@ -165,7 +161,9 @@ function advanceBy(context: RootContext, length: number) {
 
 function createRoot(children: AstNodeElement[]): AstNodeElement {
   return {
-    children
+    children,
+    helpers: [],
+    type: NodeTypes.ROOT
   }
 }
 
