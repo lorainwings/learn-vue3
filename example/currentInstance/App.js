@@ -1,4 +1,4 @@
-import { h, getCurrentInstance } from '../../lib/vue-next.esm.js'
+import { h, getCurrentInstance } from '../../packages/vue/dist/v-next.esm.js'
 import { Foo } from './Foo.js'
 
 export const App = {

@@ -1,4 +1,4 @@
-import { h, renderSlots } from '../../lib/vue-next.esm.js'
+import { h, renderSlots } from '../../packages/vue/dist/v-next.esm.js'
 
 export const Foo = {
   name: 'Foo',

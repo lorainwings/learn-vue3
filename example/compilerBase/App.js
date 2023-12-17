@@ -1,4 +1,4 @@
-import { ref } from '../../lib/vue-next.esm.js'
+import { ref } from '../../packages/vue/dist/v-next.esm.js'
 
 export const App = {
   name: 'App',

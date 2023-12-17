@@ -1,4 +1,4 @@
-import { h, ref, reactive } from '../../lib/vue-next.esm.js'
+import { h, ref, reactive } from '../../packages/vue/dist/v-next.esm.js'
 export default {
   name: 'Child',
   setup(props, { emit }) {},

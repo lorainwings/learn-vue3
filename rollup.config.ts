@@ -1,24 +1,31 @@
 import typescript, { RollupTypescriptOptions } from '@rollup/plugin-typescript'
-import { readFileSync } from 'fs'
-
-const pkg = JSON.parse(
-  readFileSync(new URL('./package.json', import.meta.url), { encoding: 'utf8' })
-)
+import alias from '@rollup/plugin-alias'
+import path from 'path'
 
 const config: RollupTypescriptOptions = {
-  input: './src/index.ts',
+  input: './packages/vue/src/index.ts',
   output: [
     {
       format: 'cjs',
-      file: pkg.main
+      file: 'packages/vue/dist/v-next.cjs.js'
     },
     {
       format: 'es',
       sourcemap: true,
-      file: pkg.module
+      file: 'packages/vue/dist/v-next.esm.js'
     }
   ],
-  plugins: [typescript()]
+  plugins: [
+    typescript(),
+    alias({
+      entries: [
+        {
+          find: /^@v-next\/(.*)$/,
+          replacement: path.join(__dirname, 'packages/$1/src')
+        }
+      ]
+    })
+  ]
 }
 
 export default config

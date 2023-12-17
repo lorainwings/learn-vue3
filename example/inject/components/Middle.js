@@ -1,4 +1,4 @@
-import { h, inject, provide } from '../../../lib/vue-next.esm.js'
+import { h, inject, provide } from '../../../packages/vue/dist/v-next.esm.js'
 import { Consumer } from './Consumer.js'
 
 export const Middle = {

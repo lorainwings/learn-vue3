@@ -1,4 +1,4 @@
-import { h, provide } from '../../../lib/vue-next.esm.js'
+import { h, provide } from '../../../packages/vue/dist/v-next.esm.js'
 import { Middle } from './Middle.js'
 
 export const Provider = {

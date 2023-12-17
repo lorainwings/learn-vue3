@@ -1,4 +1,4 @@
-import { h, createTextVNode } from '../../lib/vue-next.esm.js'
+import { h, createTextVNode } from '../../packages/vue/dist/v-next.esm.js'
 import { Foo } from './Foo.js'
 
 export const App = {

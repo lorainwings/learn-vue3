@@ -1,4 +1,4 @@
-import { h, inject } from '../../../lib/vue-next.esm.js'
+import { h, inject } from '../../../packages/vue/dist/v-next.esm.js'
 
 export const Consumer = {
   name: 'Consumer',

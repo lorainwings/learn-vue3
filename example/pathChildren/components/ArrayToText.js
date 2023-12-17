@@ -1,5 +1,5 @@
 // 场景一: 老的是array, 新的是text
-import { h, ref } from '../../../lib/vue-next.esm.js'
+import { h, ref } from '../../../packages/vue/dist/v-next.esm.js'
 const nextChildren = 'newChildren'
 const prevChildren = [h('div', {}, 'A'), h('div', {}, 'B')]
 

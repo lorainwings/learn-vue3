@@ -1,6 +1,6 @@
 // vue3
 import { App } from './App.js'
-import { createRenderer } from '../../lib/vue-next.esm.js'
+import { createRenderer } from '../../packages/vue/dist/v-next.esm.js'
 
 const game = new window.PIXI.Application({
   width: 500,

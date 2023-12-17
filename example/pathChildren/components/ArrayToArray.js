@@ -1,7 +1,7 @@
 // 老的是 array
 // 新的是 array
 
-import { ref, h } from '../../../lib/vue-next.esm.js'
+import { ref, h } from '../../../packages/vue/dist/v-next.esm.js'
 
 /**
  * 1. 左侧的对比

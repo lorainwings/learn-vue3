@@ -1,4 +1,9 @@
-import { h, ref, getCurrentInstance, nextTick } from '../../lib/vue-next.esm.js'
+import {
+  h,
+  ref,
+  getCurrentInstance,
+  nextTick
+} from '../../packages/vue/dist/v-next.esm.js'
 
 export default {
   name: 'App',
