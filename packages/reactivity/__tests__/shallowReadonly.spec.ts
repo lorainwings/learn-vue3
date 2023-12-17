@@ -1,4 +1,5 @@
 import { isReactive, shallowReadonly } from '../src/reactive'
+import { vi } from 'vitest'
 
 describe('shallowReadonly', () => {
   it('should not make non-reactive properties reactive', () => {
@@ -7,7 +8,7 @@ describe('shallowReadonly', () => {
   })
 
   it('warn then call set', () => {
-    console.warn = jest.fn()
+    console.warn = vi.fn()
     const user = shallowReadonly({
       age: 10
     })

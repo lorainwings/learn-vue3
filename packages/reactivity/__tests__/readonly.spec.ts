@@ -1,4 +1,5 @@
 import { isReadonly, readonly } from '../src/reactive'
+import { vi } from 'vitest'
 
 describe('readonly', () => {
   it('happy path', () => {
@@ -14,10 +15,10 @@ describe('readonly', () => {
   })
 
   // it.skip 用于跳过当前用例
-  // jest.fn 用于模拟函数, 用于测试函数是否被调用
+  // vi.fn 用于模拟函数, 用于测试函数是否被调用
   // 命令pnpm test xxx(例如本例readonly) 可以单独测试某个用例
   it('warn then call set', () => {
-    console.warn = jest.fn()
+    console.warn = vi.fn()
     const user = readonly({
       age: 10
     })
