@@ -2,6 +2,9 @@ import typescript, { RollupTypescriptOptions } from '@rollup/plugin-typescript'
 import alias from '@rollup/plugin-alias'
 import path from 'path'
 
+const __filename = new URL(import.meta.url).pathname
+const __dirname = path.dirname(__filename)
+
 const config: RollupTypescriptOptions = {
   input: './packages/vue/src/index.ts',
   output: [

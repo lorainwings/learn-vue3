@@ -16,7 +16,7 @@
   },
   "scripts": {
     "test": "vitest run",
-    "test:watch": "vitest --watchAll",
+    "test:watch": "vitest watch",
     "build": "rollup --config rollup.config.ts --configPlugin @rollup/plugin-typescript",
     "build:watch": "rollup --config rollup.config.ts --configPlugin @rollup/plugin-typescript -w",
     "eslint": "eslint src/** --no-error-on-unmatched-pattern --ext .js, .ts --cache",
