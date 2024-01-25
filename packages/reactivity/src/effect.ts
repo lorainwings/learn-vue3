@@ -13,7 +13,7 @@ export interface IEffectOptions {
 // 全局存储当前组件的effect
 let activeEffect: ReactiveEffect
 // stop后是否应该收集依赖
-let shouldTrack
+let shouldTrack = true
 const targetMap = new Map()
 
 export class ReactiveEffect {

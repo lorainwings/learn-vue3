@@ -1,19 +1,8 @@
 {
   "name": "@lorain/learn-vue3",
   "version": "1.0.0",
-  "description": "",
+  "description": "study vue3 source repository",
   "type": "module",
-  "files": [
-    "lib"
-  ],
-  "main": "./lib/vue-next.cjs.js",
-  "module": "./lib/vue-next.esm.js",
-  "exports": {
-    ".": {
-      "import": "./lib/vue-next.esm.js",
-      "require": "./lib/vue-next.cjs.js"
-    }
-  },
   "scripts": {
     "test": "vitest run",
     "test:watch": "vitest watch",
